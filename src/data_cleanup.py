@@ -6,15 +6,14 @@ import copy
 
 current_path = os.path.dirname(__file__)
 
-def preprocess_all_files():
+
+def preprocess_all_files(directory=None):
     '''
     Function extracts only required data from conllu files
     '''
-    pass
-
-
-def preprocess(filepath=None):
-    pass
+    # FIXME: loop through all conllu files in the directory
+    if directory is None:
+        conllu_to_json(current_path + '/../data/en-ud-train.conllu')
 
 
 def conllu_to_json(filepath=None):
@@ -63,12 +62,9 @@ def conllu_to_json(filepath=None):
         sent['words'] = words
         text.append(sent)
 
-    # pprint.pformat(text)
-
     with open(filepath.replace('.conllu', '.json'), 'w+') as f:
         f.write(json.dumps(text))
 
 
 if __name__ == '__main__':
-    # preprocess_all_files()
-    conllu_to_json(current_path + '/../data/en-ud-train.conllu')
+    preprocess_all_files()
