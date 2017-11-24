@@ -20,7 +20,7 @@ def get_nodes(adjacency_matrix):
     return nodes_list
 
 #print(get_nodes(test_matrix1))
-    
+
 def preprocess(matrix, root):
     nodes_list = get_nodes(matrix)
     for node in nodes_list:
@@ -30,10 +30,10 @@ def preprocess(matrix, root):
 
 test_matrix = preprocess(test_matrix1, 0)
 #print(test_matrix)
-    
+
 def entering_weights(adjacency_matrix, node):
     return adjacency_matrix[:, node]
-    
+
 #print(entering_weights(test_matrix, 3))
 
 def edges(graph):
@@ -43,7 +43,7 @@ def edges(graph):
             if graph[i][j] != 0:
                 edges.append((i, j))
     return(edges)
-    
+
 #print(edges(test_matrix))
 
 
@@ -70,7 +70,7 @@ def biggest_edge_index(graph):
 
 #creates the graph with the largest edge to each node
 def try_biggest(graph, root):
-    
+
     output = np.zeros(graph.shape)
     nodes_list = get_nodes(graph)
     biggest_edge_index_dict = biggest_edge_index(graph)
@@ -86,7 +86,7 @@ def try_biggest(graph, root):
 #adapted from code I found on Stackexchange
 def cyclic(graph):
     nodes_list = get_nodes(graph)
-    
+
     path = set()
     visited = set()
 
@@ -120,7 +120,7 @@ def is_mst(graph_attempt):
 def find_cycles(graph):
     nodes_list = get_nodes(graph)
     cycles_list = []
-    
+
     path = []
     visited = []
 
@@ -139,10 +139,10 @@ def find_cycles(graph):
                 cycles_list[-1].append(neighbour)
         path.remove(node)
         return
-    
+
     for node in nodes_list:
         visit(node)
-    
+
     return cycles_list
 
 #print(find_cycles(try_biggest(test_matrix, 0)))
@@ -159,43 +159,43 @@ def edmonds(graph, root):
     conversion_dictionaries_list = []
     new_graph = preprocess(graph, root)
     graph_attempt = try_biggest(graph, root)
-    
+
     while not is_mst(new_graph):
         conversion_dict = defaultdict()
         nodes_list = get_nodes(new_graph)
         graph_attempt = try_biggest(new_graph, root)
-        
+
 #        print("GRAPH ATTEMPT")
 #        print(graph_attempt)
-        
+
         if is_mst(graph_attempt):
             new_graph = graph_attempt
             break
-        
+
         cycle1 = find_cycles(graph_attempt)[0]
 #        print("CYCLE", cycle1)
-        
+
         new_graph_nodes = []
-        contracted_node = "contracted node"    
+        contracted_node = "contracted node"
         for node in nodes_list:
             if node not in set(cycle1):
                 new_graph_nodes.append(node)
 
 #        print("NEW GRAPH NODES", new_graph_nodes)
-        
+
         updated_indices = {}
         for i in range(len(new_graph_nodes)):
             updated_indices[new_graph_nodes[i]] = i
-        
+
         updated_indices[contracted_node] = len(new_graph_nodes)
 
         new_graph = np.zeros((len(new_graph_nodes) + 1, len(new_graph_nodes) + 1))
-        
+
 #            edges not in cycle
         for node1 in new_graph_nodes:
             for node2 in new_graph_nodes:
                 new_graph[updated_indices[node1]][updated_indices[node2]] = graph[node1][node2]
-        
+
 #            outward edges
         for node2 in new_graph_nodes:
             max_from_cycle = [0.0, ("dummy", "dummy")]
@@ -206,11 +206,11 @@ def edmonds(graph, root):
             new_graph[updated_indices[contracted_node]][updated_indices[node2]] = max_from_cycle[0]
             if max_from_cycle[1] != ("dummy", "dummy"):
                 conversion_dict[(updated_indices[contracted_node], updated_indices[node2])] = [max_from_cycle[1]]
-          
+
 #            inward edges
         edges_in_cycle = list(zip(cycle1, cycle1[1:]))
 #        print("EDGES IN CYCLE", edges_in_cycle)
-        
+
         for node in new_graph_nodes:
             for i in range(len(edges_in_cycle)):
                 trial_list = edges_in_cycle.copy()
@@ -225,10 +225,10 @@ def edmonds(graph, root):
                     if sum_path(graph, trial_list) > max_path_score:
                         max_path_score = sum_path(graph, trial_list)
                         max_path = trial_list
-            
+
             conversion_dict[(updated_indices[node], updated_indices[contracted_node])] = max_path
-            new_graph[updated_indices[node]][updated_indices[contracted_node]] = max_path_score            
-        
+            new_graph[updated_indices[node]][updated_indices[contracted_node]] = max_path_score
+
         for node1 in new_graph_nodes:
             for node2 in new_graph_nodes:
                 conversion_dict[(updated_indices[node1],updated_indices[node2])] = [(node1, node2)]
@@ -236,7 +236,7 @@ def edmonds(graph, root):
         conversion_dictionaries_list.append(conversion_dict)
 #        print("NEW GRAPH")
 #        print(new_graph)
-    
+
 #    print("CONVERSION", conversion_dictionaries_list)
 
     list_of_nodes = []
@@ -245,24 +245,24 @@ def edmonds(graph, root):
             if new_graph[node1][node2] > 0.0:
                 list_of_nodes.append((node1, node2))
 
-    while len(conversion_dictionaries_list) > 0:        
+    while len(conversion_dictionaries_list) > 0:
 #        print("LIST OF NODES", list_of_nodes)
         new_list = []
         for pair in list_of_nodes:
 #            print(conversion_dictionaries_list[-1][pair])
             for node_pair in conversion_dictionaries_list[-1][pair]:
                 new_list.append(node_pair)
-            
+
         list_of_nodes = new_list
         del conversion_dictionaries_list[-1]
-    
+
     print("LIST OF NODES", list_of_nodes)
-    
+
     output_mst = np.zeros(graph.shape)
     for (node1, node2) in list_of_nodes:
         output_mst[node1][node2] = graph[node1][node2]
-    
-    return output_mst
-     
 
-print(edmonds(test_matrix1, 0))
+    return output_mst
+
+
+#print(edmonds(test_matrix1, 0))
