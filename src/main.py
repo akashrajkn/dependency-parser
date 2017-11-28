@@ -7,17 +7,19 @@ import torch.autograd as autograd
 from gensim.models import Word2Vec
 from torch.autograd import Variable
 
+
 current_path = os.path.dirname(__file__)
 
+
 class MLP(torch.nn.Module):
-    def __init__(self, D_in, H, D_out):
+    def __init__(self, input_dimension, hidden_dimension, output_dimension):
         """
         In the constructor we instantiate two nn.Linear modules and assign them as
         member variables.
         """
         super(MLP, self).__init__()
-        self.linear1 = torch.nn.Linear(D_in, H)
-        self.linear2 = torch.nn.Linear(H, D_out)
+        self.linear1 = torch.nn.Linear(input_dimension, hidden_dimension)
+        self.linear2 = torch.nn.Linear(hidden_dimension, output_dimension)
 
     def forward(self, x):
         """
@@ -99,6 +101,8 @@ def dependency_parser(filepath=None):
                 h_dep = MLP_dep(vec_d)
                 # s[i] = h_head.T * U_1 * h_dep[i] + h_head.T * u_2
                 s[i,j] = torch.mm(h_head, torch.mm(U_1, torch.t(h_dep))) + torch.mm(h_head, torch.t(u_2))
+
+        # FIXME: break statement is temporary
         break
 
 # test_matrix1 = np.random.rand(6, 6)

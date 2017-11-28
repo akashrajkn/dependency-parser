@@ -47,7 +47,7 @@ def conllu_to_json(filepath=None):
         words = []
         for line in lines:
             words_list = line.split('\t')
-            words.append({
+            word = {
                 "id": words_list[0],
                 "form": words_list[1],
                 "lemma": words_list[2],
@@ -58,7 +58,22 @@ def conllu_to_json(filepath=None):
                 "deprel": words_list[7],
                 "deps": words_list[8],
                 "misc": words_list[9]
-            })
+            }
+            words.append(word)
+
+            if word['deprel'] == 'root':
+                words.append({
+                    "id": "0",
+                    "form": "<ROOT> ",
+                    "lemma": "<ROOT>",
+                    "upostag": "ROOT",
+                    "xpostag": "ROOT",
+                    "feats": "_",
+                    "head": "-1",
+                    "deprel": "_",
+                    "deps": "_",
+                    "misc": "_"
+                })
 
         sent['words'] = words
         text.append(sent)
