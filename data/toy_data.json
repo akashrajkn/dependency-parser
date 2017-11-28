@@ -75,6 +75,18 @@
                 "misc": "_"
             },
             {
+                "id": "0",
+                "form": "<ROOT> ",
+                "lemma": "<ROOT>",
+                "upostag": "ROOT",
+                "xpostag": "ROOT",
+                "feats": "_",
+                "head": "-1",
+                "deprel": "_",
+                "deps": "_",
+                "misc": "_"
+            },
+            {
                 "id": "7",
                 "form": "by",
                 "lemma": "by",
@@ -320,6 +332,18 @@
                 "misc": "_"
             },
             {
+                "id": "0",
+                "form": "<ROOT> ",
+                "lemma": "<ROOT>",
+                "upostag": "ROOT",
+                "xpostag": "ROOT",
+                "feats": "_",
+                "head": "-1",
+                "deprel": "_",
+                "deps": "_",
+                "misc": "_"
+            },
+            {
                 "id": "11",
                 "form": "us",
                 "lemma": "we",
@@ -431,6 +455,18 @@
                 "deprel": "root",
                 "deps": "0:root",
                 "misc": "SpaceAfter=No"
+            },
+            {
+                "id": "0",
+                "form": "<ROOT> ",
+                "lemma": "<ROOT>",
+                "upostag": "ROOT",
+                "xpostag": "ROOT",
+                "feats": "_",
+                "head": "-1",
+                "deprel": "_",
+                "deps": "_",
+                "misc": "_"
             },
             {
                 "id": "2",
