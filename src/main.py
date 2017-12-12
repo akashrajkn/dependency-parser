@@ -1,14 +1,16 @@
 import json
 import os
+import copy
 import MST
 import numpy as np
-#import torch
-import torch.cuda as torch  #<-- would that work?
+import torch
+#import torch.cuda as torch  #<-- would that work?
 import torch.nn as nn
 import torch.autograd as autograd
 import torch.optim as optim
 from gensim.models import Word2Vec
 from torch.autograd import Variable
+from utils import convert_sentence_to_adjacency_matrix, adjacency_matrix_to_tensor
 
 def pretrain_word_embeddings(data, len_word_embed, len_pos_embed):
     corpus_words = []
@@ -72,20 +74,23 @@ def train():
     w2i, p2i, pwe, ppe = pretrain_word_embeddings(data, len_word_embed, len_pos_embed)
 
     network = Network(w2i, p2i, pwe, ppe, len_word_embed, len_pos_embed)
-    network_params = list(network.parameters())
     softmax = nn.Softmax()
     criterion = nn.CrossEntropyLoss()
-    optimizer = optim.SGD(network_params, lr=0.001)
+    optimizer = optim.SGD(network.parameters(), lr=1)
 
     for epoch in range(100): # an epoch is a loop over the entire dataset
         for i in range(len(data)):
-            network.zero_grad() # PyTorch remembers gradients. We can forget them now, because we are starting a new sentence
+            #network.zero_grad() # PyTorch remembers gradients. We can forget them now, because we are starting a new sentence
             adj_mat = network(data[i])
             # so the softmax goes over rows but we need it over columns. supper annoying. hence the transposition
             pred = torch.t(softmax(torch.t(adj_mat)))
 
             # THIS IS A FAKE GOLD TREE. GET THE REAL ONES
-            gold_tree = torch.LongTensor(range(len(adj_mat)))
+            #gold_tree = torch.LongTensor(range(len(adj_mat)))
+            adj_mat = convert_sentence_to_adjacency_matrix(data[i])
+            gold_tree = adjacency_matrix_to_tensor(adj_mat)
+            #print(gold_tree)
+
             # Gold tree will be like
             # [[0 0 1 0]
             #  [1 1 0 0]
@@ -95,8 +100,10 @@ def train():
             # the above should become
             # [1, 1, 0, 3]
 
-            target = torch.LongTensor(gold_tree.size())
+            #target = torch.LongTensor(gold_tree.size())
             target = Variable(gold_tree, requires_grad=False)
+
+            network_params_1 = copy.deepcopy(list(network.parameters()))
 
             #input should be (batch_size, n_label) and target should be (batch_size) with values in [0, n_label-1].
             loss = criterion(pred, target)
@@ -105,8 +112,20 @@ def train():
 
             # check here if the parameters are indeed being updated
             # worringly, they are not
-            network_params = list(network.parameters())
-            print(network_params)
+            network_params_2 = copy.deepcopy(list(network.parameters()))
+
+            print(loss.data)
+
+            # for i in range(len(network_params_1)):
+            #     print(i,"th parameter")
+            #     if np.array_equal(network_params_1[i], network_params_2[i]):
+            #         print("they're the same")
+            #     else:
+            #         print("they've changed. woohoo!")
+
+            #break
+        #   break
+
 
 class Network(nn.Module):
     def __init__(self, w2i, p2i, pretrained_word_embeddings, pretrained_pos_embeddings, len_word_embed, len_pos_embed, len_feature_vec=20, len_hidden_dimension=120):

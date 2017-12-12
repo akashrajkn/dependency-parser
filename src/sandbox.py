@@ -1,5 +1,6 @@
 import torch
 import json
+import copy
 import os
 import MST
 import numpy as np
@@ -51,22 +52,39 @@ def mse_loss(input, target):
 
 network = Network()
 
-network_params = list(network.parameters())
-print(network_params)
+network_params_1 = copy.deepcopy(list(network.parameters()))
+# print(network_params_1)
 
 criterion = nn.CrossEntropyLoss()
-optimizer = optim.SGD(network_params, lr=0.001)
+optimizer = optim.SGD(network.parameters(), lr=0.1)
 
 inputs = Variable(torch.randn(5,1))
 targets = Variable(torch.randn(3,1), requires_grad = False)
 
 outputs = network(inputs)
 loss = mse_loss(outputs, torch.t(targets))
+# print(loss)
 loss.backward()
 optimizer.step()
 
-network_params = list(network.parameters())
-print(network_params)
+network_params_2 = copy.deepcopy(list(network.parameters()))
+
+print (np.array_equal(network_params_1, network_params_2))
+
+# if np.array_equal(network_params_1, network_params_2):
+#     print("theyrethesame")
+# else:
+#     print("updates!")
+
+for i in range(len(network_params_1)):
+    print(i,"th parameter")
+    if np.array_equal(network_params_1[i], network_params_2[i]):
+        print("they're the same")
+    else:
+        print("they've changed. woohoo!")
+
+# print(network_params_1[0])
+# print(network_params_2[0])
 
 #
 #
