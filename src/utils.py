@@ -40,3 +40,12 @@ test_matrix = np.array(([1, 0, 1, 1, 0],
                        [0, 0, 0, 0, 0]))
 print(test_matrix)
 print(adjacency_matrix_to_tensor(test_matrix))
+
+#something like this will convert directly
+def convert_sentence_to_tensor(sentence):
+    sentence_len = len(sentence['words'])
+    output = [0] * sentence_len
+    for word in sentence['words']:
+        output[int(word['id'])] = int(word['head'])
+    output1 = torch.LongTensor(output)
+    return output1
