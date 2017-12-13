@@ -56,16 +56,19 @@ network_params_1 = copy.deepcopy(list(network.parameters()))
 # print(network_params_1)
 
 criterion = nn.CrossEntropyLoss()
-optimizer = optim.SGD(network.parameters(), lr=0.1)
+optimizer = optim.SGD(network.parameters(), lr=0.001)
 
 inputs = Variable(torch.randn(5,1))
 targets = Variable(torch.randn(3,1), requires_grad = False)
 
-outputs = network(inputs)
-loss = mse_loss(outputs, torch.t(targets))
-# print(loss)
-loss.backward()
-optimizer.step()
+for i in range(100):
+    network.zero_grad()
+    outputs = network(inputs)
+    loss = mse_loss(outputs, torch.t(targets))
+    # print(loss)
+    loss.backward()
+    optimizer.step()
+    print(loss.data)
 
 network_params_2 = copy.deepcopy(list(network.parameters()))
 

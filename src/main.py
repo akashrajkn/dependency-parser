@@ -2,9 +2,10 @@ import json
 import os
 import copy
 import MST
+import time
 import numpy as np
 import torch
-#import torch.cuda as torch  #<-- would that work?
+#import torch.cuda as torch  #<-- would that work? no
 import torch.nn as nn
 import torch.autograd as autograd
 import torch.optim as optim
@@ -68,67 +69,58 @@ def train():
     data = json.load(open(filepath, 'r'))
     # dummy_data = np.loadtxt('../data/dummy.txt', dtype=str)
     # data = dummy_data # <-- temporary of course
-    len_word_embed = 4
+    len_word_embed = 10
     len_pos_embed = 2
 
     w2i, p2i, pwe, ppe = pretrain_word_embeddings(data, len_word_embed, len_pos_embed)
 
-    network = Network(w2i, p2i, pwe, ppe, len_word_embed, len_pos_embed)
+    network = Network(pwe, ppe, len_word_embed, len_pos_embed)
     softmax = nn.Softmax()
     criterion = nn.CrossEntropyLoss()
-    optimizer = optim.SGD(network.parameters(), lr=1)
+    optimizer = optim.SGD(network.parameters(), lr=100)
 
-    for epoch in range(100): # an epoch is a loop over the entire dataset
+    for epoch in range(2): # an epoch is a loop over the entire dataset
         for i in range(len(data)):
-            #network.zero_grad() # PyTorch remembers gradients. We can forget them now, because we are starting a new sentence
-            adj_mat = network(data[i])
-            # so the softmax goes over rows but we need it over columns. supper annoying. hence the transposition
-            pred = torch.t(softmax(torch.t(adj_mat)))
+            network.zero_grad() # PyTorch remembers gradients. We can forget them now, because we are starting a new sentence
 
-            # THIS IS A FAKE GOLD TREE. GET THE REAL ONES
-            #gold_tree = torch.LongTensor(range(len(adj_mat)))
+            sentence_list = []
+            for word in data[i]['words']:
+                sentence_list.append([autograd.Variable(torch.LongTensor([w2i[word['form']]])), autograd.Variable(torch.LongTensor([p2i[word['xpostag']]]))])
+
+            adj_mat = network(sentence_list)
+            # so the softmax goes over rows but we need it over columns. super annoying. hence the transposition
+            pred = torch.t(softmax(torch.t(adj_mat)))
             adj_mat = convert_sentence_to_adjacency_matrix(data[i])
             gold_tree = adjacency_matrix_to_tensor(adj_mat)
-            #print(gold_tree)
-
-            # Gold tree will be like
-            # [[0 0 1 0]
-            #  [1 1 0 0]
-            #  [0 0 0 0]
-            #  [0 0 0 1]]
-            # transform this to a longtensor of sentence length with correct 'classifications'
-            # the above should become
-            # [1, 1, 0, 3]
-
-            #target = torch.LongTensor(gold_tree.size())
+            # gold tree is a longtensor with sentence length with correct 'classifications'
+            # ex [1, 1, 0, 3]
             target = Variable(gold_tree, requires_grad=False)
-
             network_params_1 = copy.deepcopy(list(network.parameters()))
-
             #input should be (batch_size, n_label) and target should be (batch_size) with values in [0, n_label-1].
             loss = criterion(pred, target)
             loss.backward()
+            network_params_1 = copy.deepcopy(list(network.parameters()))
             optimizer.step() # update per epoch or per sentence, or some batch-size inbetween?
-
-            # check here if the parameters are indeed being updated
-            # worringly, they are not
             network_params_2 = copy.deepcopy(list(network.parameters()))
 
+            # Check if params change
+            for i in range(len(network_params_1)):
+                #print(i,"th parameter")
+                if np.array_equal(network_params_1[i], network_params_2[i]):
+                    print("they parameter the same")
+                else:
+                    print("they parameter has changed. woohoo!")
+
+            # weirdly, even though the parameters change, the error remains the same
+            # it is always 2.8904 and does not decrease (maybe wobbles a bit) for any learning rate
+            # one would expect the initial error to be different every time, due to random initialisation
+            # and then decrease until convergence
             print(loss.data)
 
-            # for i in range(len(network_params_1)):
-            #     print(i,"th parameter")
-            #     if np.array_equal(network_params_1[i], network_params_2[i]):
-            #         print("they're the same")
-            #     else:
-            #         print("they've changed. woohoo!")
-
-            #break
-        #   break
 
 
 class Network(nn.Module):
-    def __init__(self, w2i, p2i, pretrained_word_embeddings, pretrained_pos_embeddings, len_word_embed, len_pos_embed, len_feature_vec=20, len_hidden_dimension=120):
+    def __init__(self, pretrained_word_embeddings, pretrained_pos_embeddings, len_word_embed, len_pos_embed, len_feature_vec=20, len_hidden_dimension=120):
         super(Network, self).__init__()
         self.len_word_embed = len_word_embed
         self.len_pos_embed = len_pos_embed
@@ -136,14 +128,11 @@ class Network(nn.Module):
         self.len_feature_vec = len_feature_vec
         self.hidden_dimension = len_hidden_dimension
 
-        self.w2i = w2i
-        self.p2i = p2i
-
         # trainable parameters
         self.word_embeddings = torch.nn.Embedding(len(pretrained_word_embeddings), len_word_embed)
-        self.word_embeddings.weight = torch.nn.Parameter(pretrained_word_embeddings)
+        #self.word_embeddings.weight = torch.nn.Parameter(pretrained_word_embeddings)
         self.pos_embeddings = torch.nn.Embedding(len(pretrained_pos_embeddings), len_pos_embed)
-        self.pos_embeddings.weight = torch.nn.Parameter(pretrained_pos_embeddings)
+        #self.pos_embeddings.weight = torch.nn.Parameter(pretrained_pos_embeddings)
 
         self.BiLSTM = torch.nn.LSTM(self.len_data_vec, self.len_data_vec, bidirectional=True)
 
@@ -156,28 +145,28 @@ class Network(nn.Module):
         self.u_2 = nn.Parameter(torch.randn(1, len_feature_vec))
 
     def MLP_head(self, r):
-        hidden = self.MLP_head_layer1(torch.sigmoid(r)).clamp(min=0)
+        hidden = self.MLP_head_layer1(torch.sigmoid(r))#.clamp(min=0)
         h = self.MLP_head_layer2(hidden)
         return h
 
     def MLP_dep(self, r):
-        hidden = self.MLP_dep_layer1(torch.sigmoid(r)).clamp(min=0)
+        hidden = self.MLP_dep_layer1(torch.sigmoid(r))#.clamp(min=0)
         h = self.MLP_dep_layer2(hidden)
         return h
 
-    def forward(self, sentence):
-        x = Variable(torch.FloatTensor(len(sentence['words']), 1, self.len_data_vec))
-        for i, word in enumerate(sentence['words']):
-            y = Variable(torch.LongTensor([self.w2i[word['form']]]))
-            word_embedding = self.word_embeddings(y) # row vect
-            z = Variable(torch.LongTensor([self.p2i[word['xpostag']]]))
-            pos_embedding = self.pos_embeddings(z) # row vect
+    def forward(self, sentence_list):
+        x = autograd.Variable(torch.FloatTensor(len(sentence_list), 1, self.len_data_vec))
+        for i, word in enumerate(sentence_list):
+            lookup_tensor_word = sentence_list[i][0]
+            word_embedding = self.word_embeddings(lookup_tensor_word) # row vect
+            lookup_tensor_pos = sentence_list[i][1]
+            pos_embedding = self.pos_embeddings(lookup_tensor_pos) # row vect
             x[i, 0, :] = torch.cat((torch.t(word_embedding), torch.t(pos_embedding)), 0)
 
         hidden = (autograd.Variable(torch.randn(2, 1, self.len_data_vec)), autograd.Variable(torch.randn(2 ,1 ,self.len_data_vec)))
         r, _ = self.BiLSTM(x, hidden)
 
-        adj_matrix = Variable(torch.FloatTensor(len(sentence['words']), len(sentence['words'])))
+        adj_matrix = autograd.Variable(torch.FloatTensor(len(sentence_list), len(sentence_list)))
         for i, vec_h in enumerate(r[:]):
             h_head = self.MLP_head(vec_h)
             for j, vec_d in enumerate(r[:]):
