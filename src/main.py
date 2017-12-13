@@ -3,12 +3,14 @@ import os
 import copy
 import MST
 import time
-import numpy as np
 import torch
-#import torch.cuda as torch  #<-- would that work? no
+import pickle
+import numpy as np
 import torch.nn as nn
 import torch.autograd as autograd
 import torch.optim as optim
+import matplotlib.pyplot as plt
+from time import gmtime, strftime
 from gensim.models import Word2Vec
 from torch.autograd import Variable
 from utils import convert_sentence_to_adjacency_matrix, adjacency_matrix_to_tensor
@@ -36,7 +38,6 @@ def pretrain_word_embeddings(data, len_word_embed, len_pos_embed):
         all_words.extend(words)
         all_pos.extend(pos_s)
 
-    # THIS NOW WORKS FOR ONLY ONE SENTENCE, NO?
     w2i = {word: idx for idx, word in enumerate(all_words)}
     p2i = {pos: idx for idx, pos in enumerate(all_pos)}
 
@@ -49,78 +50,98 @@ def pretrain_word_embeddings(data, len_word_embed, len_pos_embed):
     pretrained_pos_embeddings = torch.FloatTensor(max(p2i.values())+1, len_pos_embed)
 
     # fill the tensors with the pre-trained embeddings
-    # THE EMBEDDING HAS SIZE OF THE AMOUNT OF WORDS, NOT THE AMOUNT OF UNIQUE WORDS: WASTE OF SPACE?
     for word in w2i.keys():
         idx = w2i[word]
         pretrained_word_embeddings[idx, :] = torch.from_numpy(word_embeddings_gensim[word])
     for pos in p2i.keys():
         idx = p2i[pos]
         pretrained_pos_embeddings[idx, :] = torch.from_numpy(pos_embeddings_gensim[pos])
-
     return w2i, p2i, pretrained_word_embeddings, pretrained_pos_embeddings
 
-def train():
+def train(show=True):
     # corpus_words in Format: [['I', 'like', 'custard'],...]
     # corpus_pos in Format: [['NN', 'VB', 'PRN'],...]
     current_path = os.path.dirname(__file__)
-    filepath = current_path + '../data/toy_data.json'
+    filepath = current_path + '../data/en-ud-train-short.json'
+    #filepath = current_path + '../data/toy_data.json'
     if filepath is None:
         filepath = current_path + '../data/en-ud-train.json'
     data = json.load(open(filepath, 'r'))
-    # dummy_data = np.loadtxt('../data/dummy.txt', dtype=str)
-    # data = dummy_data # <-- temporary of course
-    len_word_embed = 10
-    len_pos_embed = 2
+    len_word_embed = 100
+    len_pos_embed = 20
 
     w2i, p2i, pwe, ppe = pretrain_word_embeddings(data, len_word_embed, len_pos_embed)
 
-    network = Network(pwe, ppe, len_word_embed, len_pos_embed)
-    softmax = nn.Softmax()
+    network = Network(w2i, p2i, pwe, ppe, len_word_embed, len_pos_embed)
+    if torch.cuda.is_available():
+        network.cuda()
     criterion = nn.CrossEntropyLoss()
-    optimizer = optim.SGD(network.parameters(), lr=100)
+    optimizer = optim.Adam(network.parameters(), lr=0.01, weight_decay =1e-6)
 
-    for epoch in range(2): # an epoch is a loop over the entire dataset
+    start = time.time()
+
+    losses = []
+
+    current_date_and_time = strftime("%Y-%m-%d-%H:%M", gmtime()) # current time is 1hr off?
+    new_dir = "weights/weights_trained_from_"+current_date_and_time
+    os.mkdir(new_dir)
+
+    with open( new_dir+"/log_file.txt", "w") as output_file:
+        output_file.write("started writing at "+current_date_and_time+'\n')
+
+    print("size of the dataset:", len(data))
+    for epoch in range(50): # an epoch is a loop over the entire dataset
         for i in range(len(data)):
             network.zero_grad() # PyTorch remembers gradients. We can forget them now, because we are starting a new sentence
 
-            sentence_list = []
-            for word in data[i]['words']:
-                sentence_list.append([autograd.Variable(torch.LongTensor([w2i[word['form']]])), autograd.Variable(torch.LongTensor([p2i[word['xpostag']]]))])
-
-            adj_mat = network(sentence_list)
-            # so the softmax goes over rows but we need it over columns. super annoying. hence the transposition
-            pred = torch.t(softmax(torch.t(adj_mat)))
-            adj_mat = convert_sentence_to_adjacency_matrix(data[i])
-            gold_tree = adjacency_matrix_to_tensor(adj_mat)
-            # gold tree is a longtensor with sentence length with correct 'classifications'
-            # ex [1, 1, 0, 3]
+            # prepare target
+            gold_mat = convert_sentence_to_adjacency_matrix(data[i])
+            gold_tree = adjacency_matrix_to_tensor(gold_mat)
             target = Variable(gold_tree, requires_grad=False)
-            network_params_1 = copy.deepcopy(list(network.parameters()))
-            #input should be (batch_size, n_label) and target should be (batch_size) with values in [0, n_label-1].
+
+            # prepare input
+            sequence = torch.LongTensor(len(data[i]['words']), 2)
+            for i, word in enumerate(data[i]['words']):
+                sequence[i,0] = w2i[word['form']]
+                sequence[i,1] = p2i[word['xpostag']]
+
+            sequence_var = Variable(sequence)
+
+            # prepare GPU
+            if torch.cuda.is_available():
+                target = target.cuda()
+                sequence_var = sequence_var.cuda()
+
+            # forward, backward, update
+            adj_mat = network(sequence_var)
+            pred = torch.t(adj_mat) # nn.CrossEntropyLoss() wants the classes in the second dimension
             loss = criterion(pred, target)
+            losses.append(loss.data.cpu().numpy()[0])
             loss.backward()
-            network_params_1 = copy.deepcopy(list(network.parameters()))
-            optimizer.step() # update per epoch or per sentence, or some batch-size inbetween?
-            network_params_2 = copy.deepcopy(list(network.parameters()))
+            optimizer.step()
 
-            # Check if params change
-            for i in range(len(network_params_1)):
-                #print(i,"th parameter")
-                if np.array_equal(network_params_1[i], network_params_2[i]):
-                    print("they parameter the same")
-                else:
-                    print("they parameter has changed. woohoo!")
+        # print an update
+        current_date_and_time = strftime("%Y-%m-%d-%H:%M:%S", gmtime())
+        saved_trainer = copy.deepcopy(network)
+        with open( new_dir+"/latest_weights.pkl", "wb") as output_file:
+            pickle.dump(saved_trainer, output_file)
+        with open( new_dir+"/log_file.txt", "a") as output_file:
+            output_file.write("backed up made at"+current_date_and_time)
+            output_file.write("loss after epoch "+str(epoch)+": "+str(losses[-1])+'\n')
+        if show:
+            print('-------')
+            print("latest parameter backup at ", current_date_and_time)
+            print("epoch {} loss {:.4f}".format(epoch, losses[-1]))
 
-            # weirdly, even though the parameters change, the error remains the same
-            # it is always 2.8904 and does not decrease (maybe wobbles a bit) for any learning rate
-            # one would expect the initial error to be different every time, due to random initialisation
-            # and then decrease until convergence
-            print(loss.data)
-
+    end = time.time()
+    if show:
+        print("execution took ", end - start, " seconds")
+        plt.plot(losses)
+        plt.show()
 
 
 class Network(nn.Module):
-    def __init__(self, pretrained_word_embeddings, pretrained_pos_embeddings, len_word_embed, len_pos_embed, len_feature_vec=20, len_hidden_dimension=120):
+    def __init__(self, w2i, p2i, pretrained_word_embeddings, pretrained_pos_embeddings, len_word_embed, len_pos_embed, len_feature_vec=20, len_hidden_dimension=120):
         super(Network, self).__init__()
         self.len_word_embed = len_word_embed
         self.len_pos_embed = len_pos_embed
@@ -128,11 +149,14 @@ class Network(nn.Module):
         self.len_feature_vec = len_feature_vec
         self.hidden_dimension = len_hidden_dimension
 
+        self.w2i = w2i
+        self.p2i = p2i
+
         # trainable parameters
         self.word_embeddings = torch.nn.Embedding(len(pretrained_word_embeddings), len_word_embed)
-        #self.word_embeddings.weight = torch.nn.Parameter(pretrained_word_embeddings)
+        self.word_embeddings.weight = torch.nn.Parameter(pretrained_word_embeddings)
         self.pos_embeddings = torch.nn.Embedding(len(pretrained_pos_embeddings), len_pos_embed)
-        #self.pos_embeddings.weight = torch.nn.Parameter(pretrained_pos_embeddings)
+        self.pos_embeddings.weight = torch.nn.Parameter(pretrained_pos_embeddings)
 
         self.BiLSTM = torch.nn.LSTM(self.len_data_vec, self.len_data_vec, bidirectional=True)
 
@@ -154,24 +178,31 @@ class Network(nn.Module):
         h = self.MLP_dep_layer2(hidden)
         return h
 
-    def forward(self, sentence_list):
-        x = autograd.Variable(torch.FloatTensor(len(sentence_list), 1, self.len_data_vec))
-        for i, word in enumerate(sentence_list):
-            lookup_tensor_word = sentence_list[i][0]
-            word_embedding = self.word_embeddings(lookup_tensor_word) # row vect
-            lookup_tensor_pos = sentence_list[i][1]
-            pos_embedding = self.pos_embeddings(lookup_tensor_pos) # row vect
-            x[i, 0, :] = torch.cat((torch.t(word_embedding), torch.t(pos_embedding)), 0)
+    def forward(self, sequence):
+        seq_len = len(sequence[0])
+        word_sequence = sequence[:,0]
+        pos_sequence = sequence[:,1]
 
-        hidden = (autograd.Variable(torch.randn(2, 1, self.len_data_vec)), autograd.Variable(torch.randn(2 ,1 ,self.len_data_vec)))
+        word_embeddings = self.word_embeddings(word_sequence)
+        pos_embeddings = self.pos_embeddings(pos_sequence)
+
+        x = torch.cat((word_embeddings, pos_embeddings), 1)
+        x = x[:, None, :] # add an empty y-dimension, because that's how LSTM takes its input
+
+        hidden_init_1 = torch.randn(2, 1, self.len_data_vec)
+        hidden_init_2 = torch.randn(2, 1, self.len_data_vec)
+        if torch.cuda.is_available:
+            hidden_init_1 = hidden_init_1.cuda()
+            hidden_init_2 = hidden_init_2.cuda()
+        hidden = (autograd.Variable(hidden_init_1), autograd.Variable(hidden_init_2))
+
         r, _ = self.BiLSTM(x, hidden)
 
-        adj_matrix = autograd.Variable(torch.FloatTensor(len(sentence_list), len(sentence_list)))
-        for i, vec_h in enumerate(r[:]):
-            h_head = self.MLP_head(vec_h)
-            for j, vec_d in enumerate(r[:]):
-                h_dep = self.MLP_dep(vec_d)
-                adj_matrix[i,j] = torch.mm(h_head, torch.mm(self.U_1, torch.t(h_dep))) + torch.mm(h_head, torch.t(self.u_2))
+        adj_matrix = autograd.Variable(torch.FloatTensor(seq_len, seq_len))
+        h_head = torch.squeeze(self.MLP_head(r))
+        h_dep = torch.squeeze(self.MLP_dep(r))
+        adj_matrix = h_head @ self.U_1 @ torch.t(h_dep) + h_head @ torch.t(self.u_2)
+
         return adj_matrix
 
 if __name__ == '__main__':

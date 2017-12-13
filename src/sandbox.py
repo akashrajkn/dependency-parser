@@ -51,17 +51,18 @@ def mse_loss(input, target):
     return torch.sum((input - target) ** 2)
 
 network = Network()
-
-network_params_1 = copy.deepcopy(list(network.parameters()))
-# print(network_params_1)
+print(torch.cuda.is_available())
+network.cuda()
 
 criterion = nn.CrossEntropyLoss()
 optimizer = optim.SGD(network.parameters(), lr=0.001)
 
 inputs = Variable(torch.randn(5,1))
+inputs = inputs.cuda()
 targets = Variable(torch.randn(3,1), requires_grad = False)
+targets = targets.cuda()
 
-for i in range(100):
+for i in range(10):
     network.zero_grad()
     outputs = network(inputs)
     loss = mse_loss(outputs, torch.t(targets))
@@ -69,28 +70,3 @@ for i in range(100):
     loss.backward()
     optimizer.step()
     print(loss.data)
-
-network_params_2 = copy.deepcopy(list(network.parameters()))
-
-print (np.array_equal(network_params_1, network_params_2))
-
-# if np.array_equal(network_params_1, network_params_2):
-#     print("theyrethesame")
-# else:
-#     print("updates!")
-
-for i in range(len(network_params_1)):
-    print(i,"th parameter")
-    if np.array_equal(network_params_1[i], network_params_2[i]):
-        print("they're the same")
-    else:
-        print("they've changed. woohoo!")
-
-# print(network_params_1[0])
-# print(network_params_2[0])
-
-#
-#
-# mat = torch.randn(3,5)
-# vec = torch.randn(5,1)
-# print(torch.mm(mat, vec))
