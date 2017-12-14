@@ -1,32 +1,40 @@
 import json
 import os
 import copy
-import MST
-import time
 import torch
 import pickle
+import time
+
+import matplotlib.pyplot as plt
 import numpy as np
+
 import torch.nn as nn
 import torch.autograd as autograd
 import torch.optim as optim
-import matplotlib.pyplot as plt
 import torch.nn.functional as F
+
 from time import gmtime, strftime
-from gensim.models import Word2Vec
+
 from torch.autograd import Variable
+
+from gensim.models import Word2Vec
 from utils import convert_sentence_to_adjacency_matrix, adjacency_matrix_to_tensor
 
+
 def pretrain_word_embeddings(data, len_word_embed, len_pos_embed):
+    '''
+    corpus_words in the following shape:
+    [ [some sentence]
+      [some other sentence] ]
+
+    all_words in the shape:
+    [ some sentence some other sentence]
+    '''
+
     corpus_words = []
     corpus_pos = []
     all_words = []
     all_pos = []
-    # corpus_words in the following shape:
-    #  [ [some sentence]
-    #    [some other sentence] ]
-    #
-    # all_words in the shape:
-    # [ some sentence some other sentence]
 
     for sentence in data:
         words = []
@@ -54,51 +62,62 @@ def pretrain_word_embeddings(data, len_word_embed, len_pos_embed):
     for word in w2i.keys():
         idx = w2i[word]
         pretrained_word_embeddings[idx, :] = torch.from_numpy(word_embeddings_gensim[word])
+
     for pos in p2i.keys():
         idx = p2i[pos]
         pretrained_pos_embeddings[idx, :] = torch.from_numpy(pos_embeddings_gensim[pos])
+
     return w2i, p2i, pretrained_word_embeddings, pretrained_pos_embeddings
 
-def train(show=True):
-    # corpus_words in Format: [['I', 'like', 'custard'],...]
-    # corpus_pos in Format: [['NN', 'VB', 'PRN'],...]
-    current_path = os.path.dirname(__file__)
-    #filepath = current_path + '../data/en-ud-train-short.json'
-    filepath = current_path + '../data/toy_data.json'
+
+def train(show=True, save=False):
+    '''
+    corpus_words in Format: [['I', 'like', 'custard'],...]
+    corpus_pos in Format: [['NN', 'VB', 'PRN'],...]
+    '''
+    current_path = os.path.dirname(os.path.realpath(__file__))
+
+    filepath = current_path + '/../data/toy_data.json'
     if filepath is None:
-        filepath = current_path + '../data/en-ud-train.json'
+        filepath = current_path + '/../data/en-ud-train.json'
+
     data = json.load(open(filepath, 'r'))
+
     len_word_embed = 100
     len_pos_embed = 20
+    lr = 0.001
+    weight_decay = 1e-6
+    betas = (0.9, 0.9)
 
     w2i, p2i, pwe, ppe = pretrain_word_embeddings(data, len_word_embed, len_pos_embed)
 
     network = Network(w2i, p2i, pwe, ppe, len_word_embed, len_pos_embed)
+
     if torch.cuda.is_available():
         network.cuda()
-    criterion = nn.CrossEntropyLoss()
-    lr = 0.001
-    wd = 1e-6
-    betas=(0.9, 0.9)
-    optimizer = optim.Adam(network.parameters(), lr=lr, betas=betas, weight_decay=wd)
 
-    start = time.time()
+    criterion = nn.CrossEntropyLoss()
+    optimizer = optim.Adam(network.parameters(), lr=lr, betas=betas, weight_decay=weight_decay)
 
     losses = []
 
-    current_date_and_time = strftime("%Y-%m-%d-%H:%M:%S", gmtime()) # current time is 1hr off?
-    new_dir = "weights/weights_trained_from_"+current_date_and_time
-    os.mkdir(new_dir)
+    start = time.time()
+    # Save trained weights
+    if save:
+        current_date_and_time = strftime("%Y-%m-%d-%H:%M:%S", gmtime())
+        new_dir = current_path + '/../weights/trained_from_' + current_date_and_time
+        os.mkdir(new_dir)
+        with open(new_dir+"/log_file.txt", "w") as output_file:
+            output_file.write('started writing at ' + current_date_and_time + '\n' +
+                              'lr = ' + str(lr) + '\n' +
+                              'weight decay = ' + str(weight_decay) + '\n')
 
-    with open( new_dir+"/log_file.txt", "w") as output_file:
-        output_file.write("started writing at "+current_date_and_time+'\n')
-        output_file.write("lr = "+str(lr)+'\n')
-        output_file.write("weight decay = "+str(wd)+'\n')
+    print('size of the dataset: ', len(data))
 
-    print("size of the dataset:", len(data))
-    for epoch in range(200): # an epoch is a loop over the entire dataset
+    # an epoch is a loop over the entire dataset
+    for epoch in range(200):
         for i in range(len(data)):
-            network.zero_grad() # PyTorch remembers gradients. We can forget them now, because we are starting a new sentence
+            network.zero_grad()  # PyTorch remembers gradients. We can forget them now, because we are starting a new sentence
 
             # prepare target
             gold_mat = convert_sentence_to_adjacency_matrix(data[i])
@@ -120,7 +139,7 @@ def train(show=True):
 
             # forward, backward, update
             adj_mat = network(sequence_var)
-            pred = torch.t(adj_mat) # nn.CrossEntropyLoss() wants the classes in the second dimension
+            pred = torch.t(adj_mat)  # nn.CrossEntropyLoss() wants the classes in the second dimension
             loss = criterion(pred, target)
             losses.append(loss.data.cpu().numpy()[0])
             loss.backward()
@@ -128,26 +147,39 @@ def train(show=True):
 
         # print an update
         current_date_and_time = strftime("%Y-%m-%d-%H:%M:%S", gmtime())
-        saved_trainer = copy.deepcopy(network)
-        with open( new_dir+"/latest_weights.pkl", "wb") as output_file:
-            pickle.dump(saved_trainer, output_file)
-        with open( new_dir+"/log_file.txt", "a") as output_file:
-            output_file.write("backed up made at"+current_date_and_time)
-            output_file.write("loss after epoch "+str(epoch)+": "+str(losses[-1])+'\n')
+
+        if save:
+            saved_trainer = copy.deepcopy(network)
+
+            with open(new_dir + '/latest_weights.pkl', 'wb') as output_file:
+                pickle.dump(saved_trainer, output_file)
+
+            with open(new_dir + '/log_file.txt', 'a') as output_file:
+                output_file.write('backed up made at '+ current_date_and_time + '\n' +
+                                  'loss after epoch ' + str(epoch) + ': ' + str(losses[-1]) + '\n')
+            plt.plot(losses)
+            plt.savefig(new_dir + '/convergence.png')
+
         if show:
-            print('-------')
-            print("latest parameter backup at ", current_date_and_time)
-            print("epoch {} loss {:.4f}".format(epoch, losses[-1]))
+            print('-'*10)
+            print('latest parameter backup at ', current_date_and_time)
+            print('epoch {} loss {:.4f}'.format(epoch, losses[-1]))
 
     end = time.time()
+
     if show:
-        print("execution took ", end - start, " seconds")
-        plt.plot(losses)
+        print('execution took ', end - start, ' seconds')
         plt.show()
 
 
 class Network(nn.Module):
-    def __init__(self, w2i, p2i, pretrained_word_embeddings, pretrained_pos_embeddings, len_word_embed, len_pos_embed, len_feature_vec=20, len_hidden_dimension=500, lstm_hidden_size=400):
+    '''
+    Define the Biaffine LSTM network
+    '''
+    def __init__(self, w2i, p2i, pretrained_word_embeddings, pretrained_pos_embeddings,
+                 len_word_embed, len_pos_embed, len_feature_vec=20, len_hidden_dimension=500,
+                 lstm_hidden_size=400):
+
         super(Network, self).__init__()
         self.len_word_embed = len_word_embed
         self.len_pos_embed = len_pos_embed
@@ -165,11 +197,12 @@ class Network(nn.Module):
         self.pos_embeddings = torch.nn.Embedding(len(pretrained_pos_embeddings), len_pos_embed)
         self.pos_embeddings.weight = torch.nn.Parameter(pretrained_pos_embeddings)
 
-        self.BiLSTM = torch.nn.LSTM(input_size=self.len_data_vec, hidden_size=self.lstm_hidden_size, num_layers = 3, dropout=.33, bidirectional=True)
+        self.BiLSTM = torch.nn.LSTM(input_size=self.len_data_vec, hidden_size=self.lstm_hidden_size,
+                                    num_layers = 3, dropout=.33, bidirectional=True)
 
-        self.MLP_head_layer1 = torch.nn.Linear(self.len_data_vec*2, len_hidden_dimension)
+        self.MLP_head_layer1 = torch.nn.Linear(self.lstm_hidden_size * 2, len_hidden_dimension)
         self.MLP_head_layer2 = torch.nn.Linear(len_hidden_dimension, len_feature_vec)
-        self.MLP_dep_layer1 = torch.nn.Linear(self.len_data_vec*2, len_hidden_dimension)
+        self.MLP_dep_layer1 = torch.nn.Linear(self.lstm_hidden_size * 2, len_hidden_dimension)
         self.MLP_dep_layer2 = torch.nn.Linear(len_hidden_dimension, len_feature_vec)
 
         self.U_1 = nn.Parameter(torch.randn(len_feature_vec, len_feature_vec))
@@ -194,13 +227,15 @@ class Network(nn.Module):
         pos_embeddings = self.pos_embeddings(pos_sequence)
 
         x = torch.cat((word_embeddings, pos_embeddings), 1)
-        x = x[:, None, :] # add an empty y-dimension, because that's how LSTM takes its input
+        x = x[:, None, :]  # add an empty y-dimension, because that's how LSTM takes its input
 
-        hidden_init_1 = torch.zeros(6, 1, self.lstm_hidden_size) # initialse random instead of zeros?
+        hidden_init_1 = torch.zeros(6, 1, self.lstm_hidden_size)  # initialse random instead of zeros?
         hidden_init_2 = torch.zeros(6, 1, self.lstm_hidden_size)
+
         if torch.cuda.is_available:
             hidden_init_1 = hidden_init_1.cuda()
             hidden_init_2 = hidden_init_2.cuda()
+
         hidden = (autograd.Variable(hidden_init_1), autograd.Variable(hidden_init_2))
 
         r, _ = self.BiLSTM(x, hidden)
@@ -211,6 +246,7 @@ class Network(nn.Module):
         adj_matrix = h_head @ self.U_1 @ torch.t(h_dep) + h_head @ torch.t(self.u_2)
 
         return adj_matrix
+
 
 if __name__ == '__main__':
     train()
