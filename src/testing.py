@@ -57,5 +57,5 @@ def test(sentence):
     pred_edges = get_edmonds(adj_mat, 0)
     pred_tensor = edges_to_tensor(pred_edges)
         
-    score_for_sentence = UAS_score(pred_tensor, gold_tensor)
+    score_for_sentence = UAS_score(pred_tensor, target)
     return score_for_sentence
