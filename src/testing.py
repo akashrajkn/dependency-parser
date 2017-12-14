@@ -47,15 +47,18 @@ def test(sentence):
     gold_tree = adjacency_matrix_to_tensor(gold_mat)
     target = Variable(gold_tree, requires_grad=False)
         
-    sequence = torch.LongTensor(len(data[i]['words']), 2)
-    for i, word in enumerate(data[i]['words']):
+    sequence = torch.LongTensor(len(sentence['words']), 2)
+    for i, word in enumerate(sentence['words']):
         sequence[i,0] = w2i[word['form']]
         sequence[i,1] = p2i[word['xpostag']]
-    sequence_var = Variable(sequence)
+    sequence_var = torch.Variable(sequence)
         
     adj_mat = network(sequence_var)
     pred_edges = get_edmonds(adj_mat, 0)
     pred_tensor = edges_to_tensor(pred_edges)
         
-    score_for_sentence = UAS_score(pred_tensor, target)
+    score_for_sentence = UAS_score(pred_tensor, gold_tree)
     return score_for_sentence
+
+#print(training_data[0])
+#print(test(training_data[0]))
