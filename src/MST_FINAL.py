@@ -223,12 +223,9 @@ def edmonds(graph, root):
         test_graph = np.zeros((len(nodes_in_cycle), len(nodes_in_cycle)))
         for node1 in range(len(nodes_in_cycle)):
             for node2 in range(len(nodes_in_cycle)):
-                test_graph[node1][node2] = graph1[nodes_in_cycle[node1]][nodes_in_cycle[node2]]
-        
+                test_graph[node1][node2] = graph1[nodes_in_cycle[node1]][nodes_in_cycle[node2]] 
 #        print("TEST GRAPH")
 #        print(test_graph)
-        
-        
         for node1 in new_graph_nodes:
             max_path_score = 0.0
             max_path = []
@@ -243,7 +240,6 @@ def edmonds(graph, root):
                 if current_path_score > max_path_score:
                     max_path_score = current_path_score
                     max_path = path_from_node
-            
 #            print("MAX PATH", max_path)
             conversion_dict[(updated_indices[node1], updated_indices[contracted_node])] = max_path
             new_graph[updated_indices[node1]][updated_indices[contracted_node]] = max_path_score            
@@ -251,15 +247,15 @@ def edmonds(graph, root):
         for node1 in new_graph_nodes:
             for node2 in new_graph_nodes:
                 conversion_dict[(updated_indices[node1],updated_indices[node2])] = [(node1, node2)]
-
-        conversion_dictionaries_list.append(conversion_dict)
         
+        #adding backtracking pointers for each recursive layer
+        conversion_dictionaries_list.append(conversion_dict)
         graph1 = new_graph
 #        print("NEW GRAPH")
 #        print(graph1)
 #    print("CONVERSION", conversion_dictionaries_list)
 
-#backtracking to find edges used in original graph
+#backtracking to find edges used in original graph given final contracted mst
     list_of_nodes = edges(graph1)
     if len(conversion_dictionaries_list) == 0:
 #        print("HELLO")
@@ -277,56 +273,7 @@ def edmonds(graph, root):
 #    print("THIS IS THE RESULT")
     return list_of_nodes
 
-#test_matrix2 = np.array([[0., 0., 0.05517177, 0., 0., 0.],
-#                [0., 0., 0.39692219, 0.84662711, 0.00740889, 0.59934641],
-#                [0., 0.40309773, 0., 0.3227141, 0.15214198, 0.35110729],
-#                [0., 0.2147357, 0.53986018, 0., 0.14796666, 0.44470598],
-#                [0., 0.39123883,  0.15957777, 0.68773443, 0., 0.00811983],
-#                [0., 0.29981688, 0.76250822, 0.9826993, 0.8283224, 0.]])
-#
-#print(test_matrix2)
-#print("____________________________________")
-#print(edmonds(test_matrix2, 0))
-
-#print(test_matrix1) 
-#print(edmonds(test_matrix1, 0))         
-
-#candidate_mst = edmonds(test_matrix1, 0)
-#print(candidate_mst)
-
-#test case from NLP HW2
-#hw2_matrix = np.array([[0,0,15,0,0],[0,0,5,5,15],[0,20,0,5,30],[0,10,20,0,5],[0,5,10,15,0]])
-#print(hw2_matrix)
-#print(edmonds(hw2_matrix, 0))
-
-#def minimum_tree(G):
-#    edmonds = Edmonds(G)
-#    tree = edmonds.find_optimum()
-#    return tree
-#
-#G = nx.DiGraph(test_matrix1.transpose())
-#networkx_output = nx.to_numpy_matrix(minimum_tree(G)).transpose()
-##print("NETWORK X OUTPUT")
-#nx_list_of_nodes = []
-#for node1 in range(networkx_output.shape[0]):
-#    for node2 in range(networkx_output.shape[0]):
-#        if networkx_output[node1, node2] > 0.0:
-#            nx_list_of_nodes.append((node1, node2))
-#print("NETWORK X NODES", nx_list_of_nodes)
-#print(networkx_output)
-
-#def is_dependency_graph(mst, root):
-#    counter = 0
-#    nodes_list = get_nodes(mst)
-#    for node in nodes_list:
-#        if mst[root][node] != 0.0:
-#            counter += 1
-#    
-#    if counter > 1:
-#        return False
-#    
-#    return True
-
+#tests if there are multiple arcs from the root
 def is_dependency_graph(mst, root):
     counter = 0
     for arc in mst:
@@ -335,9 +282,9 @@ def is_dependency_graph(mst, root):
     if counter > 1:
         return False
     return True
-
 #print(is_dependency_graph(candidate_mst, 0))
 
+#gives a list of the nodes reachable in one step from the root
 def nodes_from_root(graph, root):
     root_nodes_list = []
     nodes_list = get_nodes(graph)
@@ -348,6 +295,7 @@ def nodes_from_root(graph, root):
 
 #print(nodes_from_root(test_matrix1, 0))
 
+#makes it so there's only one (specified) node reachable in one step from the root
 def reduced_graph(graph, root, node):
     new_graph = np.copy(graph)
     nodes_list = get_nodes(graph)
@@ -356,46 +304,12 @@ def reduced_graph(graph, root, node):
             new_graph[root][node1] = 0.0          
     return new_graph
 
+#sums all the edges in an adjacency matrix, useful for comparing candidate msts
 def score_of_graph(graph):
     edge_list = edges(graph)
     return sum_path(graph, edge_list)
 
-#this is the final edmonds function, returns an mst that we can actually use
-#as a dependence tree
-#def get_edmonds(graph1, root):
-#
-#    print("ORIGINAL GRAPH")
-#    print(preprocess(graph1, root))
-#    graph = np.copy(graph1)
-#    mst = edmonds(graph, root)    
-#    root_nodes = nodes_from_root(graph1, root)
-#
-#    if is_dependency_graph(mst, root):
-#        print("FINAL LIST OF NODES")
-#        print(edges(mst))
-#        return mst 
-#    
-#    else:
-#        print("ORIGINAL NODES")
-#        print(edges(mst))
-#        print("WOULDN'T HAVE BEEN A DEPENDENCY TREE")
-#        score = 0
-#        for node in root_nodes:
-#            new_graph = reduced_graph(graph, root, node)
-##            print("NEW GRAPH")
-##            print(new_graph)
-#            new_attempt = edmonds(new_graph, root)
-##            print("EDGES OF MST")
-##            print(edges(new_attempt))
-##            print("SCORE", score_of_graph(new_attempt))
-#            if score_of_graph(new_attempt) > score:
-#                score = score_of_graph(new_attempt)
-#                best_attempt = new_attempt
-#                
-#    print("FINAL LIST OF NODES")
-#    print(edges(best_attempt))
-#    return best_attempt
-
+#this is THE FINAL edmonds function
 def get_edmonds(graph1, root):
     #print("ORIGINAL GRAPH")
     #print(preprocess(graph1, root))
@@ -405,7 +319,6 @@ def get_edmonds(graph1, root):
 
     if is_dependency_graph(mst, root):
         return mst 
-    
     else:
         #print("WOULDN'T HAVE BEEN A DEPENDENCY TREE")
         score = 0
@@ -417,13 +330,13 @@ def get_edmonds(graph1, root):
             current_score = sum_path(graph, new_attempt)
             if current_score > score:
                 score = current_score
-                best_attempt = new_attempt
-                
+                best_attempt = new_attempt             
     return best_attempt
 
 mst_final = get_edmonds(test_matrix1, 0)
 #print(mst_final)
 
+#converts the get_edmonds output (a list of edges) to the format used in the paper
 def edges_to_single(list_of_edges):
     output = [0] * (len(list_of_edges) + 1)
     for edge in list_of_edges:
