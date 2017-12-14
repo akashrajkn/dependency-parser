@@ -70,6 +70,11 @@ def pretrain_word_embeddings(data, len_word_embed, len_pos_embed):
     return w2i, p2i, pretrained_word_embeddings, pretrained_pos_embeddings
 
 
+def save_parameters(network, path='/latest_weights.pkl'):
+    with open(path, 'wb') as output_file:
+        pickle.dump(network, output_file)
+
+
 def train(show=True, save=False):
     '''
     corpus_words in Format: [['I', 'like', 'custard'],...]
@@ -77,11 +82,12 @@ def train(show=True, save=False):
     '''
     current_path = os.path.dirname(os.path.realpath(__file__))
 
-    filepath = current_path + '/../data/toy_data.json'
-    if filepath is None:
-        filepath = current_path + '/../data/en-ud-train.json'
+    filepath_dataset = current_path + '/../data/toy_data.json'
+    #filepath_dataset = current_path + '/../data/en-ud-train-short.json'
+    if filepath_dataset is None:
+        filepath_dataset = current_path + '/../data/en-ud-train.json'
 
-    data = json.load(open(filepath, 'r'))
+    data = json.load(open(filepath_dataset, 'r'))
 
     len_word_embed = 100
     len_pos_embed = 20
@@ -99,23 +105,31 @@ def train(show=True, save=False):
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(network.parameters(), lr=lr, betas=betas, weight_decay=weight_decay)
 
-    losses = []
-
     start = time.time()
     # Save trained weights
     if save:
-        current_date_and_time = strftime("%Y-%m-%d-%H:%M:%S", gmtime())
+        current_date_and_time = strftime("%Y-%m-%d_%H:%M:%S", gmtime())
         new_dir = current_path + '/../weights/trained_from_' + current_date_and_time
         os.mkdir(new_dir)
         with open(new_dir+"/log_file.txt", "w") as output_file:
             output_file.write('started writing at ' + current_date_and_time + '\n' +
+                              'dataset = ' +str(filepath_dataset)+ '\n' +
                               'lr = ' + str(lr) + '\n' +
-                              'weight decay = ' + str(weight_decay) + '\n')
+                              'weight decay = ' + str(weight_decay) + '\n' +
+                              'betas = ' + str(betas) + '\n'
+                              'len_word_embed = ' + str(network.len_word_embed) + '\n'
+                              'len_pos_embed = ' + str(network.len_pos_embed) + '\n'
+                              'len_feature_vec = ' + str(network.len_feature_vec) + '\n'
+                              'lstm_hidden_size = ' + str(network.lstm_hidden_size) + '\n'
+                              'mlp_arc_hidden_size = ' + str(network.mlp_arc_hidden_size) + '\n')
 
-    print('size of the dataset: ', len(data))
-
+    n_data = len(data)
+    losses_per_data = []
+    losses_per_epoch = []
+    if show:
+        print('size of the dataset: ', n_data)
     # an epoch is a loop over the entire dataset
-    for epoch in range(200):
+    for epoch in range(100):
         for i in range(len(data)):
             network.zero_grad()  # PyTorch remembers gradients. We can forget them now, because we are starting a new sentence
 
@@ -129,6 +143,7 @@ def train(show=True, save=False):
             for i, word in enumerate(data[i]['words']):
                 sequence[i,0] = w2i[word['form']]
                 sequence[i,1] = p2i[word['xpostag']]
+                #sequence[i,2] = target[0][i]
 
             sequence_var = Variable(sequence)
 
@@ -137,57 +152,71 @@ def train(show=True, save=False):
                 target = target.cuda()
                 sequence_var = sequence_var.cuda()
 
-            # forward, backward, update
             adj_mat = network(sequence_var)
             pred = torch.t(adj_mat)  # nn.CrossEntropyLoss() wants the classes in the second dimension
-            loss = criterion(pred, target)
-            losses.append(loss.data.cpu().numpy()[0])
-            loss.backward()
+            arc_loss = criterion(pred, target)
+            losses_per_data.append(arc_loss.data.cpu().numpy()[0])
+            arc_loss.backward()
+
+            # adj_mat, labels_pred = network(sequence_var)
+            # label_loss = label_criterion(labels_pred, labels_target)
+            # label_loss.backward()
+
             optimizer.step()
 
+            # clip to prevent exploding gradient problem?
+            # l = [ x.grad.data for x in network.parameters() if x.grad is not None]
+            # print( np.mean(l) )
+            # norm = torch.nn.utils.clip_grad_norm(network.parameters(), max_norm=0)
+            # params = list(filter(lambda p: p.grad is not None, network.parameters()))
+            # print(norm)
+        losses_per_epoch.append(np.mean(losses_per_data[-n_data:]))
+
         # print an update
-        current_date_and_time = strftime("%Y-%m-%d-%H:%M:%S", gmtime())
+        current_date_and_time = strftime("%Y-%m-%d_%H:%M:%S", gmtime())
 
         if save:
-            saved_trainer = copy.deepcopy(network)
-
-            with open(new_dir + '/latest_weights.pkl', 'wb') as output_file:
-                pickle.dump(saved_trainer, output_file)
-
             with open(new_dir + '/log_file.txt', 'a') as output_file:
-                output_file.write('backed up made at '+ current_date_and_time + '\n' +
-                                  'loss after epoch ' + str(epoch) + ': ' + str(losses[-1]) + '\n')
-            plt.plot(losses)
+                output_file.write(  'latest backup at ' + current_date_and_time + '\n' +
+                                    'loss after epoch ' + str(epoch) + ': ' + str(losses_per_data[-1]) + '\n')
+            torch.save(network.state_dict(), new_dir + '/latest_weights')
+            plt.ylim(0,5)
+            plt.subplot(211)
+            plt.title('loss per datapoint(top) and epoch(bottom)')
+            plt.plot(losses_per_data)
+            plt.subplot(212)
+            plt.plot(losses_per_epoch)
             plt.savefig(new_dir + '/convergence.png')
 
         if show:
             print('-'*10)
-            print('latest parameter backup at ', current_date_and_time)
-            print('epoch {} loss {:.4f}'.format(epoch, losses[-1]))
+            print('latest backup at ', current_date_and_time)
+            print('epoch {} loss {:.4f}'.format(epoch, losses_per_epoch[-1]))
 
     end = time.time()
 
     if show:
         print('execution took ', end - start, ' seconds')
         plt.show()
-
+    return
 
 class Network(nn.Module):
     '''
     Define the Biaffine LSTM network
     '''
     def __init__(self, w2i, p2i, pretrained_word_embeddings, pretrained_pos_embeddings,
-                 len_word_embed, len_pos_embed, len_feature_vec=20, len_hidden_dimension=500,
-                 lstm_hidden_size=400):
+                 len_word_embed, len_pos_embed, len_feature_vec=20, lstm_hidden_size=400,
+                 mlp_arc_hidden_size=500, mlp_label_hidden_size=200, n_label=20):
 
         super(Network, self).__init__()
         self.len_word_embed = len_word_embed
         self.len_pos_embed = len_pos_embed
         self.len_data_vec = len_word_embed + len_pos_embed
         self.len_feature_vec = len_feature_vec
-        self.hidden_dimension = len_hidden_dimension
         self.lstm_hidden_size = lstm_hidden_size
-
+        self.mlp_arc_hidden_size = mlp_arc_hidden_size
+        self.mlp_label_hidden_size = mlp_label_hidden_size
+        self.n_label = n_label
         self.w2i = w2i
         self.p2i = p2i
 
@@ -200,28 +229,44 @@ class Network(nn.Module):
         self.BiLSTM = torch.nn.LSTM(input_size=self.len_data_vec, hidden_size=self.lstm_hidden_size,
                                     num_layers = 3, dropout=.33, bidirectional=True)
 
-        self.MLP_head_layer1 = torch.nn.Linear(self.lstm_hidden_size * 2, len_hidden_dimension)
-        self.MLP_head_layer2 = torch.nn.Linear(len_hidden_dimension, len_feature_vec)
-        self.MLP_dep_layer1 = torch.nn.Linear(self.lstm_hidden_size * 2, len_hidden_dimension)
-        self.MLP_dep_layer2 = torch.nn.Linear(len_hidden_dimension, len_feature_vec)
+        self.MLP_arc_head_layer1 = torch.nn.Linear(self.lstm_hidden_size * 2, mlp_arc_hidden_size)
+        self.MLP_arc_head_layer2 = torch.nn.Linear(mlp_arc_hidden_size, len_feature_vec)
+        self.MLP_arc_dep_layer1 = torch.nn.Linear(self.lstm_hidden_size * 2, mlp_arc_hidden_size)
+        self.MLP_arc_dep_layer2 = torch.nn.Linear(mlp_arc_hidden_size, len_feature_vec)
+
+        self.MLP_label_head_layer1 = torch.nn.Linear(self.lstm_hidden_size * 2, mlp_label_hidden_size)
+        self.MLP_label_head_layer2 = torch.nn.Linear(mlp_label_hidden_size, len_feature_vec)
+        self.MLP_label_dep_layer1 = torch.nn.Linear(self.lstm_hidden_size * 2, mlp_label_hidden_size)
+        self.MLP_label_dep_layer2 = torch.nn.Linear(mlp_label_hidden_size, len_feature_vec)
 
         self.U_1 = nn.Parameter(torch.randn(len_feature_vec, len_feature_vec))
         self.u_2 = nn.Parameter(torch.randn(1, len_feature_vec))
 
-    def MLP_head(self, r):
-        hidden = self.MLP_head_layer1(F.relu(r)).clamp(min=0)
-        h = self.MLP_head_layer2(hidden)
+    def MLP_arc_head(self, r):
+        hidden = F.relu(self.MLP_arc_head_layer1(r))
+        h = self.MLP_arc_head_layer2(hidden)
         return h
 
-    def MLP_dep(self, r):
-        hidden = self.MLP_dep_layer1(F.relu(r)).clamp(min=0)
-        h = self.MLP_dep_layer2(hidden)
+    def MLP_arc_dep(self, r):
+        hidden = F.relu(self.MLP_arc_dep_layer1(r))
+        h = self.MLP_arc_dep_layer2(hidden)
+        return h
+
+    def MLP_label_head(self, r):
+        hidden = F.relu(self.MLP_label_head_layer1(r))
+        h = self.MLP_label_head_layer2(hidden)
+        return h
+
+    def MLP_label_dep(self, r):
+        hidden = F.relu(self.MLP_label_dep_layer1(r))
+        h = self.MLP_label_dep_layer2(hidden)
         return h
 
     def forward(self, sequence):
         seq_len = len(sequence[0])
         word_sequence = sequence[:,0]
         pos_sequence = sequence[:,1]
+        #gold_tree = sequence[:,2]
 
         word_embeddings = self.word_embeddings(word_sequence)
         pos_embeddings = self.pos_embeddings(pos_sequence)
@@ -241,12 +286,13 @@ class Network(nn.Module):
         r, _ = self.BiLSTM(x, hidden)
 
         adj_matrix = autograd.Variable(torch.FloatTensor(seq_len, seq_len))
-        h_head = torch.squeeze(self.MLP_head(r))
-        h_dep = torch.squeeze(self.MLP_dep(r))
-        adj_matrix = h_head @ self.U_1 @ torch.t(h_dep) + h_head @ torch.t(self.u_2)
+        h_arc_head = torch.squeeze(self.MLP_arc_head(r))
+        h_arc_dep = torch.squeeze(self.MLP_arc_dep(r))
+        adj_matrix = h_arc_head @ self.U_1 @ torch.t(h_arc_dep) + h_arc_head @ torch.t(self.u_2)
 
-        return adj_matrix
+        #r[gold_tree] =
 
+        return adj_matrix #, pred_labels
 
 if __name__ == '__main__':
-    train()
+    train(show=True, save=False)
