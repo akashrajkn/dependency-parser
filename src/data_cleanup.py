@@ -4,7 +4,7 @@ import json
 import copy
 
 
-current_path = os.path.dirname(__file__)
+current_path = os.path.dirname(os.path.realpath(__file__))
 
 def preprocess_all_files():
     '''
@@ -80,10 +80,26 @@ def conllu_to_json(filepath=None):
 
     # pprint.pformat(text)
 
-    with open(filepath.replace('.conllu', '.json'), 'w+') as f:
-        f.write(json.dumps(text))
+    with open(filepath.replace('conllu', 'json'), 'w+') as f:
+        f.write(json.dumps(text, indent=4))
 
 
 if __name__ == '__main__':
     # preprocess_all_files()
-    conllu_to_json(current_path + '/../data/en-ud-train.conllu')
+    data_path = current_path + '/../data/'
+
+    conllu_files = os.listdir(data_path + 'conllu/')
+    json_files = os.listdir(data_path + 'json/')
+
+    # Don't convert files that are already pre-processed
+    for json_file in json_files:
+        converted = json_file.replace('.json', '.conllu')
+        if converted in conllu_files:
+            conllu_files.remove(converted)
+
+    for conllu_file in conllu_files:
+        try:
+            conllu_to_json(data_path + 'conllu/' + conllu_file)
+            print('Converted: ', conllu_file)
+        except:
+            print('Failed to convert: ', conllu_file)

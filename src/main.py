@@ -110,17 +110,19 @@ def train(show=True, save=False):
     if save:
         current_date_and_time = strftime("%Y-%m-%d_%H:%M:%S", gmtime())
         new_dir = current_path + '/../weights/trained_from_' + current_date_and_time
+        log_file = new_dir + '/log_file.txt'
         os.mkdir(new_dir)
-        with open(new_dir+"/log_file.txt", "w") as output_file:
+
+        with open(log_file, 'w') as output_file:
             output_file.write('started writing at ' + current_date_and_time + '\n' +
-                              'dataset = ' +str(filepath_dataset)+ '\n' +
+                              'dataset = ' + str(filepath_dataset) + '\n' +
                               'lr = ' + str(lr) + '\n' +
                               'weight decay = ' + str(weight_decay) + '\n' +
-                              'betas = ' + str(betas) + '\n'
-                              'len_word_embed = ' + str(network.len_word_embed) + '\n'
-                              'len_pos_embed = ' + str(network.len_pos_embed) + '\n'
-                              'len_feature_vec = ' + str(network.len_feature_vec) + '\n'
-                              'lstm_hidden_size = ' + str(network.lstm_hidden_size) + '\n'
+                              'betas = ' + str(betas) + '\n' +
+                              'len_word_embed = ' + str(network.len_word_embed) + '\n' +
+                              'len_pos_embed = ' + str(network.len_pos_embed) + '\n' +
+                              'len_feature_vec = ' + str(network.len_feature_vec) + '\n' +
+                              'lstm_hidden_size = ' + str(network.lstm_hidden_size) + '\n' +
                               'mlp_arc_hidden_size = ' + str(network.mlp_arc_hidden_size) + '\n')
 
     n_data = len(data)
@@ -176,7 +178,7 @@ def train(show=True, save=False):
         current_date_and_time = strftime("%Y-%m-%d_%H:%M:%S", gmtime())
 
         if save:
-            with open(new_dir + '/log_file.txt', 'a') as output_file:
+            with open(log_file, 'a') as output_file:
                 output_file.write(  'latest backup at ' + current_date_and_time + '\n' +
                                     'loss after epoch ' + str(epoch) + ': ' + str(losses_per_data[-1]) + '\n')
             torch.save(network.state_dict(), new_dir + '/latest_weights')
@@ -295,4 +297,4 @@ class Network(nn.Module):
         return adj_matrix #, pred_labels
 
 if __name__ == '__main__':
-    train(show=True, save=False)
+    train()
