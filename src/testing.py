@@ -5,16 +5,41 @@ Created on Wed Dec 13 17:39:46 2017
 
 @author: jackharding
 """
-import numpy as np
-import torch
 import json
 import os
+import copy
+import torch
+import pickle
+import time
+
+import matplotlib.pyplot as plt
+import numpy as np
+
+import torch.nn as nn
+import torch.autograd as autograd
+import torch.optim as optim
+import torch.nn.functional as F
+
+from time import gmtime, strftime
+
+from torch.autograd import Variable
+
+from gensim.models import Word2Vec
+from utils import convert_sentence_to_adjacency_matrix, adjacency_matrix_to_tensor
+from MST import get_edmonds
 
 current_path = os.path.dirname(__file__)
 filepath = current_path + '/../data/toy_data.json'
 #if filepath is None:
 #filepath = current_path + '/../data/en-ud-train.json'
 training_data = json.load(open(filepath, 'r'))
+
+len_word_embed = 100
+len_pos_embed = 20
+lr = 0.001
+weight_decay = 1e-6
+betas = (0.9, 0.9)
+
 w2i, p2i, pwe, ppe = pretrain_word_embeddings(training_data, len_word_embed, len_pos_embed)
 network = Network(w2i, p2i, pwe, ppe, len_word_embed, len_pos_embed)
 
@@ -46,14 +71,15 @@ def test(sentence):
     gold_mat = convert_sentence_to_adjacency_matrix(sentence)
     gold_tree = adjacency_matrix_to_tensor(gold_mat)
     target = Variable(gold_tree, requires_grad=False)
-        
+    
     sequence = torch.LongTensor(len(sentence['words']), 2)
     for i, word in enumerate(sentence['words']):
         sequence[i,0] = w2i[word['form']]
         sequence[i,1] = p2i[word['xpostag']]
-    sequence_var = torch.Variable(sequence)
+    sequence_var = Variable(sequence)
         
     adj_mat = network(sequence_var)
+    adj_mat = adj_mat.data.numpy()
     pred_edges = get_edmonds(adj_mat, 0)
     pred_tensor = edges_to_tensor(pred_edges)
         
@@ -61,4 +87,4 @@ def test(sentence):
     return score_for_sentence
 
 #print(training_data[0])
-#print(test(training_data[0]))
+print(test(training_data[0]))
