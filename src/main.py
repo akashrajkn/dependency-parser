@@ -10,6 +10,7 @@ import torch.nn as nn
 import torch.autograd as autograd
 import torch.optim as optim
 import matplotlib.pyplot as plt
+import torch.nn.functional as F
 from time import gmtime, strftime
 from gensim.models import Word2Vec
 from torch.autograd import Variable
@@ -62,8 +63,8 @@ def train(show=True):
     # corpus_words in Format: [['I', 'like', 'custard'],...]
     # corpus_pos in Format: [['NN', 'VB', 'PRN'],...]
     current_path = os.path.dirname(__file__)
-    filepath = current_path + '../data/en-ud-train-short.json'
-    #filepath = current_path + '../data/toy_data.json'
+    #filepath = current_path + '../data/en-ud-train-short.json'
+    filepath = current_path + '../data/toy_data.json'
     if filepath is None:
         filepath = current_path + '../data/en-ud-train.json'
     data = json.load(open(filepath, 'r'))
@@ -76,21 +77,26 @@ def train(show=True):
     if torch.cuda.is_available():
         network.cuda()
     criterion = nn.CrossEntropyLoss()
-    optimizer = optim.Adam(network.parameters(), lr=0.01, weight_decay =1e-6)
+    lr = 0.001
+    wd = 1e-6
+    betas=(0.9, 0.9)
+    optimizer = optim.Adam(network.parameters(), lr=lr, betas=betas, weight_decay=wd)
 
     start = time.time()
 
     losses = []
 
-    current_date_and_time = strftime("%Y-%m-%d-%H:%M", gmtime()) # current time is 1hr off?
+    current_date_and_time = strftime("%Y-%m-%d-%H:%M:%S", gmtime()) # current time is 1hr off?
     new_dir = "weights/weights_trained_from_"+current_date_and_time
     os.mkdir(new_dir)
 
     with open( new_dir+"/log_file.txt", "w") as output_file:
         output_file.write("started writing at "+current_date_and_time+'\n')
+        output_file.write("lr = "+str(lr)+'\n')
+        output_file.write("weight decay = "+str(wd)+'\n')
 
     print("size of the dataset:", len(data))
-    for epoch in range(50): # an epoch is a loop over the entire dataset
+    for epoch in range(200): # an epoch is a loop over the entire dataset
         for i in range(len(data)):
             network.zero_grad() # PyTorch remembers gradients. We can forget them now, because we are starting a new sentence
 
@@ -141,13 +147,14 @@ def train(show=True):
 
 
 class Network(nn.Module):
-    def __init__(self, w2i, p2i, pretrained_word_embeddings, pretrained_pos_embeddings, len_word_embed, len_pos_embed, len_feature_vec=20, len_hidden_dimension=120):
+    def __init__(self, w2i, p2i, pretrained_word_embeddings, pretrained_pos_embeddings, len_word_embed, len_pos_embed, len_feature_vec=20, len_hidden_dimension=500, lstm_hidden_size=400):
         super(Network, self).__init__()
         self.len_word_embed = len_word_embed
         self.len_pos_embed = len_pos_embed
         self.len_data_vec = len_word_embed + len_pos_embed
         self.len_feature_vec = len_feature_vec
         self.hidden_dimension = len_hidden_dimension
+        self.lstm_hidden_size = lstm_hidden_size
 
         self.w2i = w2i
         self.p2i = p2i
@@ -158,7 +165,7 @@ class Network(nn.Module):
         self.pos_embeddings = torch.nn.Embedding(len(pretrained_pos_embeddings), len_pos_embed)
         self.pos_embeddings.weight = torch.nn.Parameter(pretrained_pos_embeddings)
 
-        self.BiLSTM = torch.nn.LSTM(self.len_data_vec, self.len_data_vec, bidirectional=True)
+        self.BiLSTM = torch.nn.LSTM(input_size=self.len_data_vec, hidden_size=self.lstm_hidden_size, num_layers = 3, dropout=.33, bidirectional=True)
 
         self.MLP_head_layer1 = torch.nn.Linear(self.len_data_vec*2, len_hidden_dimension)
         self.MLP_head_layer2 = torch.nn.Linear(len_hidden_dimension, len_feature_vec)
@@ -169,12 +176,12 @@ class Network(nn.Module):
         self.u_2 = nn.Parameter(torch.randn(1, len_feature_vec))
 
     def MLP_head(self, r):
-        hidden = self.MLP_head_layer1(torch.sigmoid(r))#.clamp(min=0)
+        hidden = self.MLP_head_layer1(F.relu(r)).clamp(min=0)
         h = self.MLP_head_layer2(hidden)
         return h
 
     def MLP_dep(self, r):
-        hidden = self.MLP_dep_layer1(torch.sigmoid(r))#.clamp(min=0)
+        hidden = self.MLP_dep_layer1(F.relu(r)).clamp(min=0)
         h = self.MLP_dep_layer2(hidden)
         return h
 
@@ -189,8 +196,8 @@ class Network(nn.Module):
         x = torch.cat((word_embeddings, pos_embeddings), 1)
         x = x[:, None, :] # add an empty y-dimension, because that's how LSTM takes its input
 
-        hidden_init_1 = torch.randn(2, 1, self.len_data_vec)
-        hidden_init_2 = torch.randn(2, 1, self.len_data_vec)
+        hidden_init_1 = torch.zeros(6, 1, self.lstm_hidden_size) # initialse random instead of zeros?
+        hidden_init_2 = torch.zeros(6, 1, self.lstm_hidden_size)
         if torch.cuda.is_available:
             hidden_init_1 = hidden_init_1.cuda()
             hidden_init_2 = hidden_init_2.cuda()
