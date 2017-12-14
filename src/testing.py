@@ -26,7 +26,7 @@ from torch.autograd import Variable
 
 from gensim.models import Word2Vec
 from utils import convert_sentence_to_adjacency_matrix, adjacency_matrix_to_tensor
-from MST import get_edmonds
+from MST_FINAL import get_edmonds, edges_to_single
 
 current_path = os.path.dirname(__file__)
 filepath = current_path + '/../data/toy_data.json'
@@ -42,7 +42,7 @@ betas = (0.9, 0.9)
 
 w2i, p2i, pwe, ppe = pretrain_word_embeddings(training_data, len_word_embed, len_pos_embed)
 network = Network(w2i, p2i, pwe, ppe, len_word_embed, len_pos_embed)
-
+softmax = nn.Softmax()
 #takes in two tensors representing dependency trees
 #and returns their unlabelled attachement score
 def UAS_score(pred_tensor, gold_tensor):
@@ -79,12 +79,13 @@ def test(sentence):
     sequence_var = Variable(sequence)
         
     adj_mat = network(sequence_var)
+    adj_mat = softmax(torch.t(adj_mat))
     adj_mat = adj_mat.data.numpy()
     pred_edges = get_edmonds(adj_mat, 0)
-    pred_tensor = edges_to_tensor(pred_edges)
-        
+    pred_single = edges_to_single(pred_edges)
+    pred_tensor = torch.LongTensor(pred_single)
     score_for_sentence = UAS_score(pred_tensor, gold_tree)
     return score_for_sentence
 
-#print(training_data[0])
-print(test(training_data[0]))
+sentence = training_data[0]
+#print(test(sentence))
