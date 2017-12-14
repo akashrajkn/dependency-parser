@@ -1,3 +1,5 @@
+import json
+
 import torch
 
 import numpy as np
@@ -31,3 +33,27 @@ def adjacency_matrix_to_tensor(matrix):
 
 def convert_adjancecy_matrix_to_sentece(matrix):
     pass
+
+def get_labels():
+    '''
+
+    '''
+    path = '../data/labels'
+
+    with open(path) as f:
+        content = f.readlines()
+
+    labels = {}
+    count = 1
+
+    for line in content:
+        temp = line.split(':')
+
+        if len(temp) == 2:
+            # labels.append(temp[0])
+            labels[count] = temp[0]
+            labels[temp[0]] = count
+            count += 1
+
+    with open(path + '.json', 'w+') as f:
+        f.write(json.dumps(labels, indent=4))
