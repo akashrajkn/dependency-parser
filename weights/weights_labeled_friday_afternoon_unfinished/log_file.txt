@@ -1,0 +1,19 @@
+started writing at 2017-12-15_13:10:43
+dataset = /home/bram/Documents/dependency-parser/src/../data/en-ud-train_unk.json
+lr = 0.002
+weight decay = 1e-06
+betas = (0.9, 0.9)
+len_word_embed = 100
+len_pos_embed = 20
+len_feature_vec = 20
+lstm_hidden_size = 400
+mlp_arc_hidden_size = 500
+
+TIME: 2017-12-15_13:23:40, EPOCH: 0, LOSS: 0.526954
+TIME: 2017-12-15_13:36:39, EPOCH: 1, LOSS: 0.363994
+TIME: 2017-12-15_13:49:38, EPOCH: 2, LOSS: 0.340407
+TIME: 2017-12-15_14:02:36, EPOCH: 3, LOSS: 0.31338
+TIME: 2017-12-15_14:15:33, EPOCH: 4, LOSS: 0.47987
+TIME: 2017-12-15_14:28:29, EPOCH: 5, LOSS: 0.314518
+TIME: 2017-12-15_14:41:27, EPOCH: 6, LOSS: 0.333342
+TIME: 2017-12-15_14:54:52, EPOCH: 7, LOSS: 0.336437
