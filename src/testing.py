@@ -42,6 +42,8 @@ def UAS_score(pred_tensor, gold_tensor):
     for i in range(length):
         if pred_tensor[i] == gold_tensor[i]:
             count += 1
+    # we always get the Root to Root arc right, but we don't want to count it
+    count -= 1
     return count, length
 
 def LAS_score(pred_tensor, gold_tensor, pred_labels, gold_labels):
