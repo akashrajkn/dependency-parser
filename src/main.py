@@ -123,7 +123,7 @@ def train(show=True, save=False):
                               'len_pos_embed = ' + str(network.len_pos_embed) + '\n' +
                               'len_feature_vec = ' + str(network.len_feature_vec) + '\n' +
                               'lstm_hidden_size = ' + str(network.lstm_hidden_size) + '\n' +
-                              'mlp_arc_hidden_size = ' + str(network.mlp_arc_hidden_size) + '\n')
+                              'mlp_arc_hidden_size = ' + str(network.mlp_arc_hidden_size) + '\n\n')
 
     n_data = len(data)
     losses_per_data = []
@@ -183,8 +183,11 @@ def train(show=True, save=False):
 
         if save:
             with open(log_file, 'a') as output_file:
-                output_file.write(  'latest backup at ' + current_date_and_time + '\n' +
-                                    'loss after epoch ' + str(epoch) + ': ' + str(losses_per_data[-1]) + '\n')
+                to_write = 'TIME: {0}, EPOCH: {1}, LOSS: {2}\n'.format(current_date_and_time,
+                                                                       str(epoch), str(losses_per_data[-1]))
+                output_file.write(to_write)
+                # output_file.write(  'latest backup at ' + current_date_and_time + '\n' +
+                #                     'loss after epoch ' + str(epoch) + ': ' + str(losses_per_data[-1]) + '\n')
             torch.save(network, new_dir + '/latest_weights')
             plt.ylim(0,5)
             plt.subplot(211)
