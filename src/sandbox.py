@@ -10,10 +10,13 @@ import torch.optim as optim
 from gensim.models import Word2Vec
 from torch.autograd import Variable
 
-x = torch.randn(4,3)
-print(x)
-print(x.max(0))
+d = {}
+d['hey'] = 1
+d['yo'] = 2
+if 'hey' not in d:
+    d['hey'] = 3
 
+print(d)
 
 #
 # class Network(nn.Module):

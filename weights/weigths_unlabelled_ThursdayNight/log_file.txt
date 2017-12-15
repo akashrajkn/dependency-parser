@@ -1,0 +1,272 @@
+started writing at 2017-12-14_22:36:44
+dataset = /home/bram/Documents/dependency-parser/src/../data/en-ud-train-short.json
+lr = 0.002
+weight decay = 1e-06
+betas = (0.9, 0.9)
+len_word_embed = 100
+len_pos_embed = 20
+len_feature_vec = 20
+lstm_hidden_size = 400
+mlp_arc_hidden_size = 500
+latest backup at 2017-12-14_22:40:24
+loss after epoch 0: 1.67814
+latest backup at 2017-12-14_22:44:09
+loss after epoch 1: 1.72846
+latest backup at 2017-12-14_22:47:52
+loss after epoch 2: 1.83936
+latest backup at 2017-12-14_22:51:35
+loss after epoch 3: 1.39791
+latest backup at 2017-12-14_22:55:18
+loss after epoch 4: 1.49865
+latest backup at 2017-12-14_22:59:01
+loss after epoch 5: 1.38889
+latest backup at 2017-12-14_23:02:44
+loss after epoch 6: 1.51399
+latest backup at 2017-12-14_23:06:26
+loss after epoch 7: 1.44441
+latest backup at 2017-12-14_23:10:09
+loss after epoch 8: 1.3682
+latest backup at 2017-12-14_23:13:52
+loss after epoch 9: 1.42036
+latest backup at 2017-12-14_23:17:34
+loss after epoch 10: 1.45533
+latest backup at 2017-12-14_23:21:17
+loss after epoch 11: 1.43309
+latest backup at 2017-12-14_23:25:00
+loss after epoch 12: 1.34746
+latest backup at 2017-12-14_23:28:43
+loss after epoch 13: 1.27074
+latest backup at 2017-12-14_23:32:26
+loss after epoch 14: 1.38866
+latest backup at 2017-12-14_23:36:09
+loss after epoch 15: 1.36219
+latest backup at 2017-12-14_23:39:52
+loss after epoch 16: 1.34373
+latest backup at 2017-12-14_23:43:35
+loss after epoch 17: 1.46457
+latest backup at 2017-12-14_23:47:18
+loss after epoch 18: 1.41482
+latest backup at 2017-12-14_23:51:01
+loss after epoch 19: 2.15832
+latest backup at 2017-12-14_23:54:44
+loss after epoch 20: 1.35708
+latest backup at 2017-12-14_23:58:27
+loss after epoch 21: 1.55992
+latest backup at 2017-12-15_00:02:10
+loss after epoch 22: 1.41805
+latest backup at 2017-12-15_00:05:53
+loss after epoch 23: 1.43009
+latest backup at 2017-12-15_00:09:36
+loss after epoch 24: 1.25423
+latest backup at 2017-12-15_00:13:20
+loss after epoch 25: 1.33316
+latest backup at 2017-12-15_00:17:03
+loss after epoch 26: 1.22338
+latest backup at 2017-12-15_00:20:46
+loss after epoch 27: 1.34993
+latest backup at 2017-12-15_00:24:30
+loss after epoch 28: 1.51574
+latest backup at 2017-12-15_00:28:13
+loss after epoch 29: 1.28251
+latest backup at 2017-12-15_00:31:56
+loss after epoch 30: 1.47142
+latest backup at 2017-12-15_00:35:40
+loss after epoch 31: 1.79667
+latest backup at 2017-12-15_00:39:23
+loss after epoch 32: 1.51673
+latest backup at 2017-12-15_00:43:06
+loss after epoch 33: 1.44774
+latest backup at 2017-12-15_00:46:50
+loss after epoch 34: 1.42215
+latest backup at 2017-12-15_00:50:33
+loss after epoch 35: 1.25067
+latest backup at 2017-12-15_00:54:17
+loss after epoch 36: 2.1546
+latest backup at 2017-12-15_00:58:00
+loss after epoch 37: 1.66493
+latest backup at 2017-12-15_01:01:44
+loss after epoch 38: 1.45745
+latest backup at 2017-12-15_01:05:27
+loss after epoch 39: 1.78419
+latest backup at 2017-12-15_01:09:11
+loss after epoch 40: 1.57836
+latest backup at 2017-12-15_01:12:55
+loss after epoch 41: 1.56261
+latest backup at 2017-12-15_01:16:39
+loss after epoch 42: 1.7247
+latest backup at 2017-12-15_01:20:23
+loss after epoch 43: 1.3248
+latest backup at 2017-12-15_01:24:07
+loss after epoch 44: 1.32858
+latest backup at 2017-12-15_01:27:51
+loss after epoch 45: 1.36541
+latest backup at 2017-12-15_01:31:35
+loss after epoch 46: 1.4781
+latest backup at 2017-12-15_01:35:19
+loss after epoch 47: 1.12198
+latest backup at 2017-12-15_01:39:03
+loss after epoch 48: 1.40382
+latest backup at 2017-12-15_01:42:47
+loss after epoch 49: 1.40506
+latest backup at 2017-12-15_01:46:31
+loss after epoch 50: 1.5601
+latest backup at 2017-12-15_01:50:15
+loss after epoch 51: 1.77938
+latest backup at 2017-12-15_01:53:59
+loss after epoch 52: 1.60878
+latest backup at 2017-12-15_01:57:43
+loss after epoch 53: 1.39338
+latest backup at 2017-12-15_02:01:27
+loss after epoch 54: 1.09215
+latest backup at 2017-12-15_02:05:12
+loss after epoch 55: 1.05089
+latest backup at 2017-12-15_02:08:56
+loss after epoch 56: 1.14687
+latest backup at 2017-12-15_02:12:41
+loss after epoch 57: 1.22596
+latest backup at 2017-12-15_02:16:26
+loss after epoch 58: 1.18599
+latest backup at 2017-12-15_02:20:10
+loss after epoch 59: 2.49318
+latest backup at 2017-12-15_02:23:55
+loss after epoch 60: 1.67985
+latest backup at 2017-12-15_02:27:39
+loss after epoch 61: 1.65316
+latest backup at 2017-12-15_02:31:24
+loss after epoch 62: 1.30754
+latest backup at 2017-12-15_02:35:09
+loss after epoch 63: 1.73815
+latest backup at 2017-12-15_02:38:54
+loss after epoch 64: 1.11434
+latest backup at 2017-12-15_02:42:39
+loss after epoch 65: 1.67184
+latest backup at 2017-12-15_02:46:24
+loss after epoch 66: 1.17378
+latest backup at 2017-12-15_02:50:09
+loss after epoch 67: 1.22376
+latest backup at 2017-12-15_02:53:54
+loss after epoch 68: 1.34035
+latest backup at 2017-12-15_02:57:39
+loss after epoch 69: 1.30344
+latest backup at 2017-12-15_03:01:24
+loss after epoch 70: 1.79194
+latest backup at 2017-12-15_03:05:10
+loss after epoch 71: 2.19747
+latest backup at 2017-12-15_03:08:55
+loss after epoch 72: 1.04443
+latest backup at 2017-12-15_03:12:40
+loss after epoch 73: 1.03987
+latest backup at 2017-12-15_03:16:26
+loss after epoch 74: 1.24072
+latest backup at 2017-12-15_03:20:11
+loss after epoch 75: 1.24105
+latest backup at 2017-12-15_03:23:57
+loss after epoch 76: 1.04165
+latest backup at 2017-12-15_03:27:43
+loss after epoch 77: 1.40183
+latest backup at 2017-12-15_03:31:28
+loss after epoch 78: 1.36414
+latest backup at 2017-12-15_03:35:14
+loss after epoch 79: 1.20422
+latest backup at 2017-12-15_03:39:00
+loss after epoch 80: 1.09235
+latest backup at 2017-12-15_03:42:46
+loss after epoch 81: 1.34104
+latest backup at 2017-12-15_03:46:31
+loss after epoch 82: 1.15798
+latest backup at 2017-12-15_03:50:18
+loss after epoch 83: 1.26484
+latest backup at 2017-12-15_03:54:04
+loss after epoch 84: 1.39471
+latest backup at 2017-12-15_03:57:50
+loss after epoch 85: 1.28645
+latest backup at 2017-12-15_04:01:36
+loss after epoch 86: 1.23503
+latest backup at 2017-12-15_04:05:22
+loss after epoch 87: 1.16546
+latest backup at 2017-12-15_04:09:09
+loss after epoch 88: 1.2744
+latest backup at 2017-12-15_04:12:55
+loss after epoch 89: 2.13113
+latest backup at 2017-12-15_04:16:42
+loss after epoch 90: 1.0037
+latest backup at 2017-12-15_04:20:28
+loss after epoch 91: 1.27097
+latest backup at 2017-12-15_04:24:15
+loss after epoch 92: 1.40101
+latest backup at 2017-12-15_04:28:01
+loss after epoch 93: 1.48175
+latest backup at 2017-12-15_04:31:48
+loss after epoch 94: 1.2507
+latest backup at 2017-12-15_04:35:35
+loss after epoch 95: 1.51619
+latest backup at 2017-12-15_04:39:22
+loss after epoch 96: 1.23993
+latest backup at 2017-12-15_04:43:09
+loss after epoch 97: 0.897942
+latest backup at 2017-12-15_04:46:56
+loss after epoch 98: 1.16642
+latest backup at 2017-12-15_04:50:43
+loss after epoch 99: 1.14616
+latest backup at 2017-12-15_04:54:30
+loss after epoch 100: 0.967168
+latest backup at 2017-12-15_04:58:17
+loss after epoch 101: 0.937628
+latest backup at 2017-12-15_05:02:04
+loss after epoch 102: 1.38884
+latest backup at 2017-12-15_05:05:51
+loss after epoch 103: 1.60848
+latest backup at 2017-12-15_05:09:39
+loss after epoch 104: 1.17184
+latest backup at 2017-12-15_05:13:27
+loss after epoch 105: 0.683423
+latest backup at 2017-12-15_05:17:14
+loss after epoch 106: 1.00402
+latest backup at 2017-12-15_05:21:02
+loss after epoch 107: 1.34479
+latest backup at 2017-12-15_05:24:50
+loss after epoch 108: 1.5117
+latest backup at 2017-12-15_05:28:40
+loss after epoch 109: 0.404061
+latest backup at 2017-12-15_05:32:28
+loss after epoch 110: 1.4849
+latest backup at 2017-12-15_05:36:16
+loss after epoch 111: 1.14595
+latest backup at 2017-12-15_05:40:04
+loss after epoch 112: 1.0446
+latest backup at 2017-12-15_05:43:52
+loss after epoch 113: 0.995735
+latest backup at 2017-12-15_05:47:40
+loss after epoch 114: 1.02618
+latest backup at 2017-12-15_05:51:28
+loss after epoch 115: 1.20302
+latest backup at 2017-12-15_05:55:17
+loss after epoch 116: 0.982661
+latest backup at 2017-12-15_05:59:05
+loss after epoch 117: 1.0615
+latest backup at 2017-12-15_06:02:54
+loss after epoch 118: 1.1424
+latest backup at 2017-12-15_06:06:43
+loss after epoch 119: 1.00746
+latest backup at 2017-12-15_06:10:31
+loss after epoch 120: 1.10674
+latest backup at 2017-12-15_06:14:20
+loss after epoch 121: 1.3223
+latest backup at 2017-12-15_06:18:09
+loss after epoch 122: 1.29404
+latest backup at 2017-12-15_06:21:58
+loss after epoch 123: 1.27238
+latest backup at 2017-12-15_06:25:47
+loss after epoch 124: 1.22566
+latest backup at 2017-12-15_06:29:36
+loss after epoch 125: 1.0183
+latest backup at 2017-12-15_06:33:25
+loss after epoch 126: 0.713304
+latest backup at 2017-12-15_06:37:14
+loss after epoch 127: 1.45408
+latest backup at 2017-12-15_06:41:04
+loss after epoch 128: 1.34619
+latest backup at 2017-12-15_06:44:54
+loss after epoch 129: 1.39235
+latest backup at 2017-12-15_06:48:45
+loss after epoch 130: 1.27375
