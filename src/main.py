@@ -29,15 +29,16 @@ def pretrain_word_embeddings(data, len_word_embed, len_pos_embed):
 
     all_words in the shape:
     [ some sentence some other sentence]
+
+    corpus_words in Format: [['I', 'like', 'custard'],...]
+    corpus_pos in Format: [['NN', 'VB', 'PRN'],...]
     '''
 
     corpus_words = []
     corpus_pos = []
     all_words = []
     all_pos = []
-
     l2i = {}
-
     for sentence in data:
         words = []
         pos_s = []
@@ -70,7 +71,6 @@ def pretrain_word_embeddings(data, len_word_embed, len_pos_embed):
     for word in w2i.keys():
         idx = w2i[word]
         pretrained_word_embeddings[idx, :] = torch.from_numpy(word_embeddings_gensim[word])
-
     for pos in p2i.keys():
         idx = p2i[pos]
         pretrained_pos_embeddings[idx, :] = torch.from_numpy(pos_embeddings_gensim[pos])
@@ -79,45 +79,44 @@ def pretrain_word_embeddings(data, len_word_embed, len_pos_embed):
 
 
 def train(show=True, save=False):
-    '''
-    corpus_words in Format: [['I', 'like', 'custard'],...]
-    corpus_pos in Format: [['NN', 'VB', 'PRN'],...]
-    '''
-    current_path = os.path.dirname(os.path.realpath(__file__))
+    start = time.time()
 
-    filepath_dataset = current_path + '/../data/toy_data.json'
-    # filepath_dataset = current_path + '/../data/en-ud-train-short.json'
+    # read in the dataset
+    current_path = os.path.dirname(os.path.realpath(__file__))
+    #filepath_dataset = current_path + '/../data/toy_data.json'
+    #filepath_dataset = current_path + '/../data/en-ud-train-short.json'
+    filepath_dataset = current_path + '/../data/en-ud-train_unk.json'
     if filepath_dataset is None:
         filepath_dataset = current_path + '/../data/en-ud-train.json'
-
     data = json.load(open(filepath_dataset, 'r'))
-    #l2i = json.load(open(current_path + '/../data/labels.json', 'r'))
 
+    # initialise word-embeddings (the starting point from which we'll train)
     len_word_embed = 100
     len_pos_embed = 20
     w2i, p2i, l2i, pwe, ppe = pretrain_word_embeddings(data, len_word_embed, len_pos_embed)
-    network = Network(w2i, p2i, pwe, ppe, len_word_embed, len_pos_embed, n_label=len(l2i))
 
-    # comment out the line above and do
-    # network = torch.load(....)
-
+    # initialise network
+    restore_session = False
+    if restore_session:
+        network = torch.load('../weights/trained_from_...')
+    else:
+        network = Network(w2i, p2i, pwe, ppe, len_word_embed, len_pos_embed, n_label=len(l2i))
     if torch.cuda.is_available():
         network.cuda()
 
+    # initialise trainer
     criterion = nn.CrossEntropyLoss()
     lr = 0.002
     weight_decay = 1e-6
     betas = (0.9, 0.9)
     optimizer = optim.Adam(network.parameters(), lr=lr, betas=betas, weight_decay=weight_decay)
 
-    start = time.time()
-    # Save trained weights
+    # initialise log file
     if save:
         current_date_and_time = strftime("%Y-%m-%d_%H:%M:%S", gmtime())
         new_dir = current_path + '/../weights/trained_from_' + current_date_and_time
         log_file = new_dir + '/log_file.txt'
         os.mkdir(new_dir)
-
         with open(log_file, 'w') as output_file:
             output_file.write('started writing at ' + current_date_and_time + '\n' +
                               'dataset = ' + str(filepath_dataset) + '\n' +
@@ -129,10 +128,8 @@ def train(show=True, save=False):
                               'len_feature_vec = ' + str(network.len_feature_vec) + '\n' +
                               'lstm_hidden_size = ' + str(network.lstm_hidden_size) + '\n' +
                               'mlp_arc_hidden_size = ' + str(network.mlp_arc_hidden_size) + '\n\n')
-
+    # messages
     n_data = len(data)
-    losses_per_data = []
-    losses_per_epoch = []
     if show:
         if save:
             print('training the model. Weights will be backed up...')
@@ -140,8 +137,12 @@ def train(show=True, save=False):
             print('performing a dry run...')
         print('size of the dataset: ', n_data)
 
+    # start training
     # an epoch is a loop over the entire dataset
-    for epoch in range(300):
+    for epoch in range(50):
+        arc_loss_per_data = []
+        label_loss_per_data = []
+        total_loss_per_data = []
         for i in range(len(data)):
             network.zero_grad()  # PyTorch remembers gradients. We can forget them now, because we are starting a new sentence
 
@@ -169,48 +170,59 @@ def train(show=True, save=False):
                 labels_target = labels_target.cuda()
                 sequence_var = sequence_var.cuda()
 
-            # run the model
+            # run the network
             adj_mat, labels_pred = network(sequence_var)
 
-            # determine losses and backprop
+            # determine losses
             arc_pred = torch.t(adj_mat)  # nn.CrossEntropyLoss() wants the classes in the second dimension
             arc_loss = criterion(arc_pred, arc_target)
             label_loss = criterion(labels_pred, labels_target)
             total_loss = arc_loss + label_loss
 
             # save losses for convergence history
-            losses_per_data.append(total_loss.data.cpu().numpy()[0])
+            arc_loss_per_data.append(arc_loss.data.cpu().numpy()[0])
+            label_loss_per_data.append(label_loss.data.cpu().numpy()[0])
+            total_loss_per_data.append(total_loss.data.cpu().numpy()[0])
+            if i == 200:
+                network.arc_loss_particular.append(arc_loss.data.cpu().numpy()[0])
+                network.label_loss_particular.append(label_loss.data.cpu().numpy()[0])
+                network.total_loss_particular.append(total_loss.data.cpu().numpy()[0])
+
+            # backprop
             total_loss.backward()
             optimizer.step()
 
-        losses_per_epoch.append(np.mean(losses_per_data[-n_data:]))
+        # save losses for convergence history
+        network.arc_loss.append(np.mean(arc_loss_per_data))
+        network.label_loss.append(np.mean(label_loss_per_data))
+        network.total_loss.append(np.mean(total_loss_per_data))
 
-        # print an update
+        # backup current parameters and write to log
         current_date_and_time = strftime("%Y-%m-%d_%H:%M:%S", gmtime())
-
         if save:
             with open(log_file, 'a') as output_file:
                 to_write = 'TIME: {0}, EPOCH: {1}, LOSS: {2}\n'.format(current_date_and_time,
-                                                                       str(epoch), str(losses_per_data[-1]))
+                                                                       str(epoch), str(network.total_loss[-1]))
                 output_file.write(to_write)
-                # output_file.write(  'latest backup at ' + current_date_and_time + '\n' +
-                #                     'loss after epoch ' + str(epoch) + ': ' + str(losses_per_data[-1]) + '\n')
             torch.save(network, new_dir + '/latest_weights')
             plt.ylim(0,5)
             plt.subplot(211)
-            plt.title('loss per datapoint(top) and epoch(bottom)')
-            plt.plot(losses_per_data)
+            plt.title('loss for the 200th datapoint(top) and dataset(bottom) per epoch')
+            plt.plot(network.arc_loss_particular, 'b-')
+            plt.plot(network.label_loss_particular, 'g-')
+            plt.plot(network.total_loss_particular, 'r-')
             plt.subplot(212)
-            plt.plot(losses_per_epoch)
+            plt.plot(network.arc_loss, 'b-')
+            plt.plot(network.label_loss, 'g-')
+            plt.plot(network.total_loss, 'r-')
             plt.savefig(new_dir + '/convergence.png')
 
+    # messages
         if show:
             print('-'*10)
             print('latest backup at ', current_date_and_time)
-            print('epoch {} loss {:.4f}'.format(epoch, losses_per_epoch[-1]))
-
+            print('epoch {} loss {:.4f}'.format(epoch, network.total_loss[-1]))
     end = time.time()
-
     if show:
         print('execution took ', end - start, ' seconds')
         plt.show()
@@ -261,13 +273,12 @@ class Network(nn.Module):
         self.U_1 = nn.Parameter(torch.randn(len_feature_vec, len_feature_vec))
         self.u_2 = nn.Parameter(torch.randn(1, len_feature_vec))
 
-        self.arc_loss_per_epoch = []
-        self.label_loss_per_epoch = []
-        self.total_loss_per_epoch = []
-        self.arc_loss_per_epoch_particular = []
-        self.label_loss_per_epoch_particular = []
-        self.total_loss_per_epoch_particular = []
-
+        self.arc_loss = []
+        self.label_loss = []
+        self.total_loss = []
+        self.arc_loss_particular = []
+        self.label_loss_particular = []
+        self.total_loss_particular = []
 
     def MLP_arc_head(self, r):
         hidden = F.relu(self.MLP_arc_head_layer1(r))
@@ -295,44 +306,41 @@ class Network(nn.Module):
         return h
 
     def forward(self, sequence):
+        # read input
         seq_len = len(sequence[0])
         word_sequence = sequence[:,0]
         pos_sequence = sequence[:,1]
+        gold_tree = sequence[:,2] if seq_len == 3 else None # if there is no gold tree given, only predict arcs, not labels
 
-        gold_tree = sequence[:,2] if seq_len == 3 else None
-
+        # find word embeddings given sequence of indices and construct data vector
         word_embeddings = self.word_embeddings(word_sequence)
         pos_embeddings = self.pos_embeddings(pos_sequence)
-
         x = torch.cat((word_embeddings, pos_embeddings), 1)
         x = x[:, None, :]  # add an empty y-dimension, because that's how LSTM takes its input
 
-        hidden_init_1 = torch.zeros(6, 1, self.lstm_hidden_size)  # initialse random instead of zeros?
+        # initialise hidden state of the LSTM
+        hidden_init_1 = torch.zeros(6, 1, self.lstm_hidden_size)
         hidden_init_2 = torch.zeros(6, 1, self.lstm_hidden_size)
-
         if torch.cuda.is_available:
             hidden_init_1 = hidden_init_1.cuda()
             hidden_init_2 = hidden_init_2.cuda()
-
         hidden = (autograd.Variable(hidden_init_1), autograd.Variable(hidden_init_2))
 
+        # embed words in their context
         r, _ = self.BiLSTM(x, hidden)
 
         # "fork in the road"; arcs
-        # adj_matrix = autograd.Variable(torch.FloatTensor(seq_len, seq_len))
-
         h_arc_head = torch.squeeze(self.MLP_arc_head(r))
         h_arc_dep = torch.squeeze(self.MLP_arc_dep(r))
         adj_matrix = h_arc_head @ self.U_1 @ torch.t(h_arc_dep) + h_arc_head @ torch.t(self.u_2)
 
-
-        # labels
-        h_label_head = torch.squeeze(self.MLP_label_head(r))
-        h_label_dep = torch.squeeze(self.MLP_label_dep(r))
-
+        # "fork in the road"; labels
+        # if we only try to predict arcs (not labels) we will skip this block
+        # this occurs during testing
         pred_labels = None
-
         if gold_tree is not None:
+            h_label_head = torch.squeeze(self.MLP_label_head(r))
+            h_label_dep = torch.squeeze(self.MLP_label_dep(r))
             h_label_dep = h_label_dep[gold_tree.data]
             arcs_to_label = torch.cat((h_label_head, h_label_dep),1)
             pred_labels = self.MLP_label_classifier(arcs_to_label)
