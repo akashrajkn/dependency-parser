@@ -66,9 +66,17 @@ def conllu_to_json(filepath=None):
             else:
                 lines.append(line)
 
+        reject_sentence = False
         words = []
         for line in lines:
             words_list = line.split('\t')
+
+            try:
+                int(words_list[0])
+            except ValueError:
+                reject_sentence = True
+                break
+
             word = {
                 "id": words_list[0],
                 "form": words_list[1],
@@ -96,6 +104,9 @@ def conllu_to_json(filepath=None):
                     "deps": "_",
                     "misc": "_"
                 })
+
+        if reject_sentence:
+            continue
 
         sent['words'] = words
         text.append(sent)
