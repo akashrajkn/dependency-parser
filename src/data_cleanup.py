@@ -6,17 +6,39 @@ import copy
 
 current_path = os.path.dirname(os.path.realpath(__file__))
 
-def preprocess_all_files():
+def unknown_words_handler(filepath):
     '''
-    Function extracts only required data from conllu files
+    Replace all words that occur only once in the dataset to <unk>
     '''
-    pass
+    data = json.load(open(filepath, 'r'))
 
+    words = {}
 
-def preprocess(filepath=None):
-    pass
+    # Count the occurences
+    for sentence in data:
+        for word in sentence['words']:
+            occurences = words.get(word['form'])
+            if occurences is None:
+                words[word['form']] = 1
+            else:
+                words[word['form']] = occurences + 1
 
+    single_words = []
 
+    for word in words.keys():
+        if words[word] == 1:
+            single_words.append(word)
+
+    # Create new data
+    for sentence in data:
+        for word in sentence['words']:
+            if word['form'] in single_words:
+                word['form'] = '<unk>'
+
+    with open('../data/en-ud-train_unk.json', 'w+') as f:
+        f.write(json.dumps(data, indent=4))
+
+        
 def conllu_to_json(filepath=None):
     '''
     converts a conllu file to json
@@ -85,21 +107,23 @@ def conllu_to_json(filepath=None):
 
 
 if __name__ == '__main__':
-    # preprocess_all_files()
-    data_path = current_path + '/../data/'
+#     # preprocess_all_files()
+#     data_path = current_path + '/../data/'
 
-    conllu_files = os.listdir(data_path + 'conllu/')
-    json_files = os.listdir(data_path + 'json/')
+#     conllu_files = os.listdir(data_path + 'conllu/')
+#     json_files = os.listdir(data_path + 'json/')
 
-    # Don't convert files that are already pre-processed
-    for json_file in json_files:
-        converted = json_file.replace('.json', '.conllu')
-        if converted in conllu_files:
-            conllu_files.remove(converted)
+#     # Don't convert files that are already pre-processed
+#     for json_file in json_files:
+#         converted = json_file.replace('.json', '.conllu')
+#         if converted in conllu_files:
+#             conllu_files.remove(converted)
 
-    for conllu_file in conllu_files:
-        try:
-            conllu_to_json(data_path + 'conllu/' + conllu_file)
-            print('Converted: ', conllu_file)
-        except:
-            print('Failed to convert: ', conllu_file)
+#     for conllu_file in conllu_files:
+#         try:
+#             conllu_to_json(data_path + 'conllu/' + conllu_file)
+#             print('Converted: ', conllu_file)
+#         except:
+#             print('Failed to convert: ', conllu_file)
+
+    unknown_words_handler('../data/en-ud-train.json')
