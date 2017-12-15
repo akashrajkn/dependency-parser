@@ -1,0 +1,66 @@
+# sent_id = dev-s1
+# text = रामायण काल में भगवान राम के पुत्र कुश की राजधानी कुशावती को 483 ईसा पूर्व बुद्ध ने अपने अंतिम विश्राम के लिए चुना ।
+1	रामायण	रामायण	PROPN	NNPC	Case=Nom|Gender=Masc|Number=Sing|Person=3	2	compound	_	Vib=0|Tam=0|ChunkId=NP|ChunkType=child|Translit=rāmāyaṇa
+2	काल	काल	PROPN	NNP	Case=Acc|Gender=Masc|Number=Sing|Person=3	23	obl	_	Vib=0_में|Tam=0|ChunkId=NP|ChunkType=head|Translit=kāla
+3	में	में	ADP	PSP	AdpType=Post	2	case	_	ChunkId=NP|ChunkType=child|Translit=meṁ
+4	भगवान	भगवान	NOUN	NNC	Case=Nom|Gender=Masc|Number=Sing|Person=3	5	compound	_	Vib=0|Tam=0|ChunkId=NP2|ChunkType=child|Translit=bhagavāna
+5	राम	राम	PROPN	NNP	Case=Acc|Gender=Masc|Number=Sing|Person=3	7	nmod	_	Vib=0_का|Tam=0|ChunkId=NP2|ChunkType=head|Translit=rāma
+6	के	का	ADP	PSP	AdpType=Post|Case=Acc|Gender=Masc|Number=Sing	5	case	_	ChunkId=NP2|ChunkType=child|Translit=ke
+7	पुत्र	पुत्र	NOUN	NN	Case=Acc|Gender=Masc|Number=Sing|Person=3	8	nmod	_	Vib=0|Tam=0|ChunkId=NP3|ChunkType=head|Translit=putra
+8	कुश	कुश	PROPN	NNP	Case=Acc|Gender=Masc|Number=Sing|Person=3	10	nmod	_	Vib=0_का|Tam=0|ChunkId=NP4|ChunkType=head|Translit=kuśa
+9	की	का	ADP	PSP	AdpType=Post|Case=Acc|Gender=Fem|Number=Sing	8	case	_	ChunkId=NP4|ChunkType=child|Translit=kī
+10	राजधानी	राजधानी	NOUN	NN	Case=Acc|Gender=Fem|Number=Sing|Person=3	11	nmod	_	Vib=0|Tam=0|ChunkId=NP5|ChunkType=head|Translit=rājadhānī
+11	कुशावती	कुशावती	PROPN	NNP	Case=Acc|Gender=Fem|Number=Sing|Person=3	23	obj	_	Vib=0_को|Tam=0|ChunkId=NP6|ChunkType=head|Translit=kuśāvatī
+12	को	को	ADP	PSP	AdpType=Post	11	case	_	ChunkId=NP6|ChunkType=child|Translit=ko
+13	483	483	PROPN	NNPC	Case=Nom|Gender=Masc|Number=Sing|Person=3	15	compound	_	Vib=0|Tam=0|ChunkId=NP7|ChunkType=child|Translit=483
+14	ईसा	ईसा	PROPN	NNPC	Case=Nom|Gender=Masc|Number=Sing|Person=3	15	compound	_	Vib=0|Tam=0|ChunkId=NP7|ChunkType=child|Translit=īsā
+15	पूर्व	पूर्व	PROPN	NNP	Case=Nom|Gender=Masc|Number=Sing|Person=3	23	obl	_	Vib=0|Tam=0|ChunkId=NP7|ChunkType=head|Translit=pūrva
+16	बुद्ध	बुद्ध	PROPN	NNP	Case=Acc|Gender=Masc|Number=Sing|Person=3	23	nsubj	_	Vib=0_ने|Tam=0|ChunkId=NP8|ChunkType=head|Translit=buddha
+17	ने	ने	ADP	PSP	AdpType=Post	16	case	_	ChunkId=NP8|ChunkType=child|Translit=ne
+18	अपने	अपना	PRON	PRP	Case=Acc|Gender=Masc|PronType=Prs	20	nmod	_	Vib=0|Tam=0|ChunkId=NP9|ChunkType=head|Translit=apane
+19	अंतिम	अंतिम	ADJ	JJ	Case=Acc	20	amod	_	ChunkId=NP10|ChunkType=child|Translit=aṁtima
+20	विश्राम	विश्राम	NOUN	NN	Case=Acc|Gender=Masc|Number=Sing|Person=3	23	obl	_	Vib=0_के_लिए|Tam=0|ChunkId=NP10|ChunkType=head|Translit=viśrāma
+21	के	के	ADP	PSP	AdpType=Post	20	case	_	ChunkId=NP10|ChunkType=child|Translit=ke
+22	लिए	लिए	ADP	PSP	AdpType=Post	20	case	_	ChunkId=NP10|ChunkType=child|Translit=lie
+23	चुना	चुन	VERB	VM	Aspect=Perf|Gender=Masc|Number=Sing|VerbForm=Part|Voice=Act	0	root	_	Vib=या|Tam=yA|ChunkId=VGF|ChunkType=head|Stype=declarative|Translit=cunā
+24	।	।	PUNCT	SYM	_	23	punct	_	ChunkId=BLK|ChunkType=head|Translit=.
+
+# sent_id = dev-s2
+# text = मल्‍लों की राजधानी होने के कारण प्राचीनकाल में इस स्‍थान का अत्‍यंत महत्‍व था ।
+1	मल्‍लों	मल्ला	NOUN	NN	Case=Acc|Gender=Masc|Number=Plur|Person=3	3	nmod	_	Vib=0_का|Tam=0|ChunkId=NP|ChunkType=head|Translit=malloṁ
+2	की	का	ADP	PSP	AdpType=Post|Case=Nom|Gender=Fem|Number=Sing	1	case	_	ChunkId=NP|ChunkType=child|Translit=kī
+3	राजधानी	राजधानी	NOUN	NN	Case=Nom|Gender=Fem|Number=Sing|Person=3	4	nsubj	_	Vib=0|Tam=0|ChunkId=NP2|ChunkType=head|Translit=rājadhānī
+4	होने	हो	VERB	VM	Case=Acc|Gender=Masc|VerbForm=Inf	14	advcl	_	Vib=ना_के_कारण|Tam=nA|ChunkId=VGNN|ChunkType=head|Translit=hone
+5	के	के	ADP	PSP	AdpType=Post|Case=Acc|Gender=Masc	4	mark	_	ChunkId=VGNN|ChunkType=child|Translit=ke
+6	कारण	कारण	ADP	PSP	Case=Acc|Gender=Masc	4	mark	_	ChunkId=VGNN|ChunkType=child|Translit=kāraṇa
+7	प्राचीनकाल	प्राचीनकाल	NOUN	NN	Case=Acc|Gender=Masc|Number=Sing|Person=3	14	obl	_	Vib=0_में|Tam=0|ChunkId=NP3|ChunkType=head|Translit=prācīnakāla
+8	में	में	ADP	PSP	AdpType=Post	7	case	_	ChunkId=NP3|ChunkType=child|Translit=meṁ
+9	इस	यह	DET	DEM	Case=Acc|Number=Sing|Person=3|PronType=Dem	10	det	_	ChunkId=NP4|ChunkType=child|Translit=isa
+10	स्‍थान	स्थान	NOUN	NN	Case=Acc|Gender=Masc|Number=Sing|Person=3	13	nmod	_	Vib=0_का|Tam=0|ChunkId=NP4|ChunkType=head|Translit=sthāna
+11	का	का	ADP	PSP	AdpType=Post|Case=Nom|Gender=Masc|Number=Sing	10	case	_	ChunkId=NP4|ChunkType=child|Translit=kā
+12	अत्‍यंत	अत्यंत	ADJ	JJ	Case=Nom	13	amod	_	ChunkId=NP5|ChunkType=child|Translit=atyaṁta
+13	महत्‍व	महत्व	NOUN	NN	Case=Nom|Gender=Masc|Number=Sing|Person=3	14	nsubj	_	Vib=0|Tam=0|ChunkId=NP5|ChunkType=head|Translit=mahatva
+14	था	था	VERB	VM	Gender=Masc|Mood=Ind|Number=Sing|Tense=Past|VerbForm=Fin|Voice=Act	0	root	_	Vib=था|Tam=WA|ChunkId=VGF|ChunkType=head|Stype=declarative|Translit=thā
+15	।	।	PUNCT	SYM	_	14	punct	_	ChunkId=BLK|ChunkType=head|Translit=.
+
+# sent_id = dev-s3
+# text = बौद्ध धर्मावलंबियों के अनुसार लुंबनी, बोधगया और सारनाथ के साथ ही इस स्‍थान का विशद् महत्‍व है ।
+1	बौद्ध	बौद्ध	PROPN	NNP	Case=Nom|Gender=Masc|Number=Sing|Person=3	2	nmod	_	Vib=0|Tam=0|ChunkId=NP|ChunkType=child|Translit=bauddha
+2	धर्मावलंबियों	धर्मावलंबी	NOUN	NN	Case=Acc|Gender=Masc|Number=Plur|Person=3	17	nmod	_	Vib=0_के_अनुसार|Tam=0|ChunkId=NP|ChunkType=head|Translit=dharmāvalaṁbiyoṁ
+3	के	के	ADP	PSP	AdpType=Post	2	case	_	ChunkId=NP|ChunkType=child|Translit=ke
+4	अनुसार	अनुसार	ADP	PSP	AdpType=Post	2	case	_	ChunkId=NP|ChunkType=child|Translit=anusāra
+5	लुंबनी	लुंबनी	PROPN	NNP	Case=Acc|Gender=Masc|Number=Sing|Person=3	17	nmod	_	SpaceAfter=No|Vib=0|Tam=0|ChunkId=NP2|ChunkType=head|Translit=luṁbanī
+6	,	COMMA	PUNCT	SYM	_	7	punct	_	ChunkId=NP2|ChunkType=child|Translit=,
+7	बोधगया	बोधगया	PROPN	NNP	Case=Acc|Gender=Masc|Number=Sing|Person=3	5	conj	_	Vib=0|Tam=0|ChunkId=NP3|ChunkType=head|Translit=bodhagayā
+8	और	और	CCONJ	CC	_	9	cc	_	ChunkId=CCP|ChunkType=head|Translit=aura
+9	सारनाथ	सारनाथ	PROPN	NNP	Case=Acc|Gender=Masc|Number=Sing|Person=3	5	conj	_	Vib=0_के_साथ|Tam=0|ChunkId=NP4|ChunkType=head|Translit=sāranātha
+10	के	के	ADP	PSP	AdpType=Post	9	case	_	ChunkId=NP4|ChunkType=child|Translit=ke
+11	साथ	साथ	ADP	NST	AdpType=Post|Case=Nom|Gender=Masc|Number=Sing|Person=3	9	case	_	AltTag=ADP-NOUN|ChunkId=NP4|ChunkType=child|Translit=sātha
+12	ही	ही	PART	RP	_	11	dep	_	ChunkId=NP4|ChunkType=child|Translit=hī
+13	इस	यह	DET	DEM	Case=Acc|Number=Sing|Person=3|PronType=Dem	14	det	_	ChunkId=NP5|ChunkType=child|Translit=isa
+14	स्‍थान	स्थान	NOUN	NN	Case=Acc|Gender=Masc|Number=Sing|Person=3	17	nmod	_	Vib=0_का|Tam=0|ChunkId=NP5|ChunkType=head|Translit=sthāna
+15	का	का	ADP	PSP	AdpType=Post|Case=Nom|Gender=Masc|Number=Sing	14	case	_	ChunkId=NP5|ChunkType=child|Translit=kā
+16	विशद्	विशद्	ADJ	JJ	Case=Nom	17	amod	_	ChunkId=NP6|ChunkType=child|Translit=viśad
+17	महत्‍व	महत्व	NOUN	NN	Case=Nom|Gender=Masc|Number=Sing|Person=3	0	root	_	Vib=0|Tam=0|ChunkId=NP6|ChunkType=head|Translit=mahatva
+18	है	है	AUX	VM	Mood=Ind|Number=Sing|Person=3|Tense=Pres|VerbForm=Fin|Voice=Act	17	cop	_	Vib=है|Tam=hE|ChunkId=VGF|ChunkType=head|Stype=declarative|Translit=hai
+19	।	।	PUNCT	SYM	_	17	punct	_	ChunkId=BLK|ChunkType=head|Translit=.
