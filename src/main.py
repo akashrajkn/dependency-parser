@@ -52,6 +52,9 @@ def pretrain_word_embeddings(data, len_word_embed, len_pos_embed):
         all_words.extend(words)
         all_pos.extend(pos_s)
 
+    with open('../data/labels.json', 'w+') as f:
+        f.write(json.dumps(l2i, indent=4))
+
     w2i = {word: idx for idx, word in enumerate(all_words)}
     p2i = {pos: idx for idx, pos in enumerate(all_pos)}
 
@@ -95,6 +98,8 @@ def train(show=True, save=False):
     w2i, p2i, l2i, pwe, ppe = pretrain_word_embeddings(data, len_word_embed, len_pos_embed)
     network = Network(w2i, p2i, pwe, ppe, len_word_embed, len_pos_embed, n_label=len(l2i))
 
+    # comment out the line above and do
+    # network = torch.load(....)
 
     if torch.cuda.is_available():
         network.cuda()
@@ -172,6 +177,8 @@ def train(show=True, save=False):
             arc_loss = criterion(arc_pred, arc_target)
             label_loss = criterion(labels_pred, labels_target)
             total_loss = arc_loss + label_loss
+
+            # save losses for convergence history
             losses_per_data.append(total_loss.data.cpu().numpy()[0])
             total_loss.backward()
             optimizer.step()
@@ -215,7 +222,7 @@ class Network(nn.Module):
     '''
     def __init__(self, w2i, p2i, pretrained_word_embeddings, pretrained_pos_embeddings,
                  len_word_embed, len_pos_embed, len_feature_vec=20, lstm_hidden_size=400,
-                 mlp_arc_hidden_size=500, mlp_label_hidden_size=200, n_label=20):
+                 mlp_arc_hidden_size=500, mlp_label_hidden_size=200, n_label=47):
 
         super(Network, self).__init__()
         self.len_word_embed = len_word_embed
@@ -254,6 +261,14 @@ class Network(nn.Module):
         self.U_1 = nn.Parameter(torch.randn(len_feature_vec, len_feature_vec))
         self.u_2 = nn.Parameter(torch.randn(1, len_feature_vec))
 
+        self.arc_loss_per_epoch = []
+        self.label_loss_per_epoch = []
+        self.total_loss_per_epoch = []
+        self.arc_loss_per_epoch_particular = []
+        self.label_loss_per_epoch_particular = []
+        self.total_loss_per_epoch_particular = []
+
+
     def MLP_arc_head(self, r):
         hidden = F.relu(self.MLP_arc_head_layer1(r))
         h = self.MLP_arc_head_layer2(hidden)
@@ -283,7 +298,8 @@ class Network(nn.Module):
         seq_len = len(sequence[0])
         word_sequence = sequence[:,0]
         pos_sequence = sequence[:,1]
-        gold_tree = sequence[:,2]
+
+        gold_tree = sequence[:,2] if seq_len == 3 else None
 
         word_embeddings = self.word_embeddings(word_sequence)
         pos_embeddings = self.pos_embeddings(pos_sequence)
@@ -303,17 +319,23 @@ class Network(nn.Module):
         r, _ = self.BiLSTM(x, hidden)
 
         # "fork in the road"; arcs
-        adj_matrix = autograd.Variable(torch.FloatTensor(seq_len, seq_len))
+        # adj_matrix = autograd.Variable(torch.FloatTensor(seq_len, seq_len))
+
         h_arc_head = torch.squeeze(self.MLP_arc_head(r))
         h_arc_dep = torch.squeeze(self.MLP_arc_dep(r))
         adj_matrix = h_arc_head @ self.U_1 @ torch.t(h_arc_dep) + h_arc_head @ torch.t(self.u_2)
 
+
         # labels
         h_label_head = torch.squeeze(self.MLP_label_head(r))
         h_label_dep = torch.squeeze(self.MLP_label_dep(r))
-        h_label_dep = h_label_dep[gold_tree.data]
-        arcs_to_label = torch.cat((h_label_head, h_label_dep),1)
-        pred_labels = self.MLP_label_classifier(arcs_to_label)
+
+        pred_labels = None
+
+        if gold_tree is not None:
+            h_label_dep = h_label_dep[gold_tree.data]
+            arcs_to_label = torch.cat((h_label_head, h_label_dep),1)
+            pred_labels = self.MLP_label_classifier(arcs_to_label)
 
         return adj_matrix , pred_labels
 
