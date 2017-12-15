@@ -82,18 +82,20 @@ def train(show=True, save=False):
     '''
     current_path = os.path.dirname(os.path.realpath(__file__))
 
-    #filepath_dataset = current_path + '/../data/toy_data.json'
-    filepath_dataset = current_path + '/../data/en-ud-train-short.json'
+    filepath_dataset = current_path + '/../data/toy_data.json'
+    # filepath_dataset = current_path + '/../data/en-ud-train-short.json'
     if filepath_dataset is None:
         filepath_dataset = current_path + '/../data/en-ud-train.json'
 
     data = json.load(open(filepath_dataset, 'r'))
-    l2i = json.load(open(current_path + '/../data/labels.json', 'r'))
+    #l2i = json.load(open(current_path + '/../data/labels.json', 'r'))
 
     len_word_embed = 100
     len_pos_embed = 20
     w2i, p2i, l2i, pwe, ppe = pretrain_word_embeddings(data, len_word_embed, len_pos_embed)
     network = Network(w2i, p2i, pwe, ppe, len_word_embed, len_pos_embed, n_label=len(l2i))
+
+
     if torch.cuda.is_available():
         network.cuda()
 
@@ -132,6 +134,7 @@ def train(show=True, save=False):
         else:
             print('performing a dry run...')
         print('size of the dataset: ', n_data)
+
     # an epoch is a loop over the entire dataset
     for epoch in range(300):
         for i in range(len(data)):
@@ -182,7 +185,7 @@ def train(show=True, save=False):
             with open(log_file, 'a') as output_file:
                 output_file.write(  'latest backup at ' + current_date_and_time + '\n' +
                                     'loss after epoch ' + str(epoch) + ': ' + str(losses_per_data[-1]) + '\n')
-            torch.save(network.state_dict(), new_dir + '/latest_weights')
+            torch.save(network, new_dir + '/latest_weights')
             plt.ylim(0,5)
             plt.subplot(211)
             plt.title('loss per datapoint(top) and epoch(bottom)')
@@ -312,4 +315,4 @@ class Network(nn.Module):
         return adj_matrix , pred_labels
 
 if __name__ == '__main__':
-    train()
+    train(save=True)
