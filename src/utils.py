@@ -22,6 +22,7 @@ def convert_sentence_to_adjacency_matrix(sentence):
         adjancency_matrix[head][word_id] = 1
     return adjancency_matrix
 
+
 def adjacency_matrix_to_tensor(matrix):
     output = [0] * matrix.shape[0]
     for i in range(matrix.shape[0]):
@@ -31,13 +32,8 @@ def adjacency_matrix_to_tensor(matrix):
     output1 = torch.LongTensor(output)
     return(output1)
 
-def convert_adjancecy_matrix_to_sentece(matrix):
-    pass
 
 def get_labels():
-    '''
-
-    '''
     path = '../data/labels'
 
     with open(path) as f:

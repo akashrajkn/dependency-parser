@@ -39,6 +39,7 @@ def pretrain_word_embeddings(data, len_word_embed, len_pos_embed):
     all_words = []
     all_pos = []
     l2i = {}
+
     for sentence in data:
         words = []
         pos_s = []
@@ -52,8 +53,9 @@ def pretrain_word_embeddings(data, len_word_embed, len_pos_embed):
         corpus_pos.append(pos_s)
         all_words.extend(words)
         all_pos.extend(pos_s)
+        count += 1
 
-    with open('../data/labels.json', 'w+') as f:
+    with open('../data/labels-en.json', 'w+') as f:
         f.write(json.dumps(l2i, indent=4))
 
     w2i = {word: idx for idx, word in enumerate(all_words)}
@@ -83,11 +85,8 @@ def train(show=True, save=False):
 
     # read in the dataset
     current_path = os.path.dirname(os.path.realpath(__file__))
-    #filepath_dataset = current_path + '/../data/toy_data.json'
-    #filepath_dataset = current_path + '/../data/en-ud-train-short.json'
-    filepath_dataset = current_path + '/../data/en-ud-train_unk.json'
-    if filepath_dataset is None:
-        filepath_dataset = current_path + '/../data/en-ud-train.json'
+
+    filepath_dataset = current_path + '/../data/en-ud-train-short_unk.json'
     data = json.load(open(filepath_dataset, 'r'))
 
     # initialise word-embeddings (the starting point from which we'll train)
@@ -117,6 +116,11 @@ def train(show=True, save=False):
         new_dir = current_path + '/../weights/trained_from_' + current_date_and_time
         log_file = new_dir + '/log_file.txt'
         os.mkdir(new_dir)
+
+        os.mkdir(new_dir + '/heatmaps')
+        os.mkdir(new_dir + '/heatmaps/gold')
+        os.mkdir(new_dir + '/heatmaps/pred')
+
         with open(log_file, 'w') as output_file:
             output_file.write('started writing at ' + current_date_and_time + '\n' +
                               'dataset = ' + str(filepath_dataset) + '\n' +
@@ -192,6 +196,21 @@ def train(show=True, save=False):
             total_loss.backward()
             optimizer.step()
 
+            if epoch==0:
+                plt.clf()
+                plt.imshow(gold_mat)
+                plt.colorbar()
+                plt.savefig(new_dir + "/heatmaps/gold/gold-sent-{}".format(i))
+
+            plt.clf()
+
+            new_tensor = torch.t(F.softmax(torch.t(adj_mat))).data
+            if torch.cuda.is_available():
+                new_tensor = new_tensor.cpu()
+
+            plt.imshow(new_tensor.numpy())
+            plt.savefig(new_dir + "/heatmaps/pred/pred-sent-{}-epoch-{}".format(i, epoch))
+
         # save losses for convergence history
         network.arc_loss.append(np.mean(arc_loss_per_data))
         network.label_loss.append(np.mean(label_loss_per_data))
@@ -205,6 +224,7 @@ def train(show=True, save=False):
                                                                        str(epoch), str(network.total_loss[-1]))
                 output_file.write(to_write)
             torch.save(network, new_dir + '/latest_weights')
+            plt.clf()
             plt.ylim(0,5)
             plt.subplot(211)
             plt.title('loss for the 200th datapoint(top) and dataset(bottom) per epoch')

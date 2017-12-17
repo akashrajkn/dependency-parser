@@ -2,9 +2,61 @@ import pprint
 import os
 import json
 import copy
+from main import Network
 
 
 current_path = os.path.dirname(os.path.realpath(__file__))
+
+
+def create_test_data(trainfile, testfile):
+
+    train_data = json.load(open(trainfile, 'r'))
+
+    words = {}
+
+    # Count the occurences
+    for sentence in train_data:
+        for word in sentence['words']:
+            occurences = words.get(word['form'])
+            if occurences is None:
+                words[word['form']] = 1
+            else:
+                words[word['form']] = occurences + 1
+
+    multi_words = []
+
+    for word in words.keys():
+        if words[word] > 1:
+            multi_words.append(word)
+
+    test_data = json.load(open(testfile, 'r'))
+
+    # Create new data
+    for sentence in test_data:
+        for word in sentence['words']:
+            if word['form'] not in multi_words:
+                word['form'] = '<unk>'
+
+    labels_in_trainset = json.load(open('../data/labels-en.json', 'r'))
+
+    test_data_with_existing_labels = []
+
+    for obj in test_data:
+        add = True
+        for word in obj['words']:
+            if word['form'] == 'Administrator':
+                add = False
+                break
+
+            if word['deprel'] not in labels_in_trainset.keys():
+                add = False
+                break
+        if add:
+            test_data_with_existing_labels.append(obj)
+
+    with open('../data/toy_data_unk.json', 'w+') as f:
+        f.write(json.dumps(test_data_with_existing_labels, indent=4))
+
 
 def unknown_words_handler(filepath):
     '''
@@ -35,10 +87,10 @@ def unknown_words_handler(filepath):
             if word['form'] in single_words:
                 word['form'] = '<unk>'
 
-    with open('../data/en-ud-train_unk.json', 'w+') as f:
+    with open('../data/en-ud-train-short_unk.json', 'w+') as f:
         f.write(json.dumps(data, indent=4))
 
-        
+
 def conllu_to_json(filepath=None):
     '''
     converts a conllu file to json
@@ -111,13 +163,72 @@ def conllu_to_json(filepath=None):
         sent['words'] = words
         text.append(sent)
 
-    # pprint.pformat(text)
-
     with open(filepath.replace('conllu', 'json'), 'w+') as f:
         f.write(json.dumps(text, indent=4))
 
 
+def clean_conllu_file():
+    with open('../data/conllu/hi-ud-train.conllu', 'r') as f:
+        data = f.readlines()
+
+    output = ''
+
+    for line in data:
+        if line == '\n':
+            continue
+
+        if line.startswith('# sent_id'):
+            output += '\n'
+        output += line
+
+    with open('new-hi.conllu', 'w+') as f:
+        f.write(output)
+
+
+def shorten_data_set():
+    data = json.load(open('../data/en-ud-train.json'))
+
+    max_sentence_length = 12
+
+    short_data = []
+
+    for obj in data:
+        if len(obj['words']) <= max_sentence_length:
+            short_data.append(obj)
+
+    with open('../data/en-ud-train-short.json', 'w+') as f:
+        f.write(json.dumps(short_data, indent=4))
+
+
+def create_test_data_new(w2i, testfile):
+
+    test_data = json.load(open(testfile, 'r'))
+
+    # Create new data
+    for sentence in test_data:
+        for word in sentence['words']:
+            if word['form'] not in w2i.keys():
+                word['form'] = '<unk>'
+
+    labels_in_trainset = json.load(open('../data/labels.json', 'r'))
+
+    test_data_with_existing_labels = []
+
+    for obj in test_data:
+        add = True
+        for word in obj['words']:
+            if word['deprel'] not in labels_in_trainset.keys():
+                add = False
+                break
+        if add:
+            test_data_with_existing_labels.append(obj)
+
+    with open('../data/new-hi-ud-test_unk.json', 'w+') as f:
+        f.write(json.dumps(test_data_with_existing_labels))
+
+
 if __name__ == '__main__':
+    pass
 #     # preprocess_all_files()
 #     data_path = current_path + '/../data/'
 
@@ -137,4 +248,8 @@ if __name__ == '__main__':
 #         except:
 #             print('Failed to convert: ', conllu_file)
 
-    unknown_words_handler('../data/en-ud-train.json')
+    # shorten_data_set()
+    # clean_conllu_file()
+    # conllu_to_json('../data/conllu/en-ud-test.conllu')
+    # unknown_words_handler('../data/en-ud-train-short.json')
+    # create_test_data('../data/en-ud-train-short_unk.json', '../data/json/toy_data.json')
