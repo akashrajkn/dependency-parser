@@ -2,7 +2,7 @@
   Neural Graph-based Dependency Parser
 </h2>
 
-In  this  paper,  we  implement  a  neural  graph-based  dependency  parser  inspired by those of Kiperwasser and Goldberg  (Kiperwasserand  Goldberg,  2016)  and  Dozat  and  Manning  (Dozat  and  Manning,  2017). We train and test our parser on the English and HindiTreebanks  from  the  Universal  Dependencies Project,  achieving  a  UAS  of  84.80%  and  an LAS of 78.61% on the English corpus, and a UAS of 91.92% and an LAS of 83.94% on the Hindi corpus.
+In  this  paper,  we  implement  a  neural  graph-based  dependency  parser  inspired by those of Kiperwasser and Goldberg  (*Kiperwasserand  Goldberg,  2016*)  and  Dozat  and  Manning  (*Dozat  and  Manning,  2017*). We train and test our parser on the English and HindiTreebanks  from  the  Universal  Dependencies Project,  achieving  a  UAS  of  **84.80%**  and  an LAS of **78.61%** on the English corpus, and a UAS of **91.92%** and an LAS of **83.94%** on the Hindi corpus.
 
 ### User guide
   - To test the datasets, navigate to src/ folder and run `python testing.py`
@@ -14,8 +14,8 @@ In  this  paper,  we  implement  a  neural  graph-based  dependency  parser  ins
 CoNLL-U files from universal-depenedencis project (for english and hindi) have been used (converted to json format). All single word occurences are converted to `<unk>`. english_short contains sentences with a maximum of 12 words. hindi_short contains sentences with a maximum of 17 words.
 
 ### Docs
-  - data/ folder contains hindi and english datasets from [universal-dependencies project](http://universaldependencies.org/). It also contains the latest_weights (BiLSTM trained over the training datasets)
-  - src/ folder contains the source code for the project.
+  - **data/** folder contains hindi and english datasets from [universal-dependencies project](http://universaldependencies.org/). It also contains the latest_weights (BiLSTM trained over the training datasets)
+  - **src/** folder contains the source code for the project.
     - main.py is used train the network
     - testing.py is used to calculate the UAS and LAS scores for test dataset
     - MST_FINAL.py contains the implementation of Chu Liu Edmonds algorithm
@@ -27,7 +27,7 @@ Convergence of loss on the english_full dataset:
   <img src="data/english_full/convergence.png" height=350/>
 </div>
 
-Heatmaps of the hindi dataset for gold tree, and after epochs 0, and 29
+Heatmaps of the hindi dataset for gold tree, and after epochs 0 and 29
 <div align="center">
   <img src="data/hindi_short/gold-sent-4.png" height=200/>
   <img src="data/hindi_short/pred-sent-4-epoch-0.png" height=200/>
