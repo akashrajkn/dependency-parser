@@ -14,7 +14,7 @@ In  this  paper,  we  implement  a  neural  graph-based  dependency  parser  ins
 CoNLL-U files from universal-depenedencis project (for english and hindi) have been used (converted to json format). All single word occurences are converted to `<unk>`. english_short contains sentences with a maximum of 12 words. hindi_short contains sentences with a maximum of 17 words.
 
 ### Docs
-  - **data/** folder contains hindi and english datasets from [universal-dependencies project](http://universaldependencies.org/). It also contains the latest_weights (BiLSTM trained over the training datasets)
+  - **data/** folder contains hindi and english datasets from [universal-dependencies project](http://universaldependencies.org/). It also contains the latest_weights (BiLSTM network weights trained with the training datasets)
   - **src/** folder contains the source code for the project.
     - main.py is used train the network
     - testing.py is used to calculate the UAS and LAS scores for test dataset
