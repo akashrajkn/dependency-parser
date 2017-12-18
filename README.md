@@ -2,7 +2,7 @@
   Neural Graph-based Dependency Parser
 </h2>
 
-In  this  paper,  we  implement  a  neural  graph-based  dependency  parser  inspired by those of Kiperwasser and Goldberg  (*Kiperwasserand  Goldberg,  2016*)  and  Dozat  and  Manning  (*Dozat  and  Manning,  2017*). We train and test our parser on the English and HindiTreebanks  from  the  Universal  Dependencies Project,  achieving  a  UAS  of  **84.80%**  and  an LAS of **78.61%** on the English corpus, and a UAS of **91.92%** and an LAS of **83.94%** on the Hindi corpus.
+In  this  paper,  we  implement  a  neural  graph-based  dependency  parser  inspired by those of Kiperwasser and Goldberg  (*Kiperwasserand  Goldberg,  2016*)  and  Dozat  and  Manning  (*Dozat  and  Manning,  2017*). We train and test our parser on the English and Hindi Treebanks  from  the  Universal  Dependencies Project,  achieving  a  UAS  of  **84.80%**  and  an LAS of **78.61%** on the English corpus, and a UAS of **91.92%** and an LAS of **83.94%** on the Hindi corpus.
 
 ### User guide
   - To test the datasets, navigate to src/ folder and run `python testing.py`
@@ -27,7 +27,7 @@ Convergence of loss on the english_full dataset:
   <img src="data/english_full/convergence.png" height=350/>
 </div>
 
-Heatmaps of the hindi dataset for gold tree, and after epochs 0 and 29
+Heatmaps of the hindi dataset (sentence 4 with 17 words) for gold tree, and after epochs 0 and 29.
 <div align="center">
   <img src="data/hindi_short/gold-sent-4.png" height=200/>
   <img src="data/hindi_short/pred-sent-4-epoch-0.png" height=200/>
