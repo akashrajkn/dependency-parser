@@ -2,7 +2,7 @@
   Neural Graph-based Dependency Parser
 </h2>
 
-In  this  paper,  we  implement  a  neural  graph-based  dependency  parser  inspired by those of Kiperwasser and Goldberg  (*Kiperwasserand  Goldberg,  2016*)  and  Dozat  and  Manning  (*Dozat  and  Manning,  2017*). We train and test our parser on the English and Hindi Treebanks  from  the  Universal  Dependencies Project,  achieving  a  UAS  of  **84.80%**  and  an LAS of **78.61%** on the English corpus, and a UAS of **91.92%** and an LAS of **83.94%** on the Hindi corpus.
+In this paper, we implement a neural graph-based dependency parser inspired by those of Kiperwasser and Goldberg  (*Kiperwasser and Goldberg, 2016*) and Dozat and Manning (*Dozat and Manning, 2017*). We train and test our parser on the English and Hindi Treebanks from the Universal Dependencies Project, achieving a UAS of **84.80%** and an LAS of **78.61%** on the English corpus, and a UAS of **91.92%** and an LAS of **83.94%** on the Hindi corpus.
 
 ### Authors
 
